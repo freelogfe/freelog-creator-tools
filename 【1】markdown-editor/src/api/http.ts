@@ -18,6 +18,8 @@ const Axios = async (url: string, config: AxiosRequestConfig) => {
   };
   const res = await axios(params);
 
+  if (res.data.toString() !== "[object Object]") return res.data;
+
   const keys = Object.keys(res.data);
   if (!keys.includes("errCode")) {
     return res.data;

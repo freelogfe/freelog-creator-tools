@@ -3,7 +3,7 @@
 <template>
   <div class="resource-card-wrapper" @click="insert">
     <Cover :src="coverImages[0]" />
-    <div class="name">{{ resourceName }}</div>
+    <div class="name">{{ resourceTitle || resourceName }}</div>
     <div class="info">
       <div>{{ arr2Str(resourceType, " / ") }}</div>
       <div>{{ I18n("latest_version") + " " + latestVersion }}</div>
@@ -25,13 +25,13 @@ import Cover from "@/components/cover.vue";
 const store = useStore();
 const props = defineProps(["data"]);
 
-const { coverImages, resourceName, resourceType, latestVersion, policies } = props.data;
+const { coverImages, resourceName, resourceTitle, resourceType, latestVersion, policies } = props.data;
 const onlinePolicies = policies.filter((item: { status: number }) => item.status === 1);
 
 /** 插入资源 */
 const insert = () => {
   insertResource(props.data);
-  store.editor.setResourceDrawerType("");
+  store.editorFuncs.setResourceDrawerType("");
 };
 </script>
 

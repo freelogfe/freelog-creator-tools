@@ -28,7 +28,7 @@
 
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
-import { defineAsyncComponent, useAttrs, watch, reactive } from "vue";
+import { defineAsyncComponent, watch, reactive } from "vue";
 import { useStore } from "@/store";
 import ResourceAuthProcessor from "@/components/resource-auth-processor.vue";
 
@@ -43,7 +43,7 @@ const data = reactive({
 
 /** 关闭抽屉 */
 const closeDrawer = () => {
-  store.editor.setPolicyDrawer(false);
+  store.editorFuncs.setPolicyDrawer(false);
 };
 
 watch(

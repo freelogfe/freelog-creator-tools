@@ -5,6 +5,7 @@ import { h, VNode } from "snabbdom";
 import { ResourceToolbar } from "../toolbar";
 import { CustomResourceData } from "@/typings/object";
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 
 /** 文档资源 DOM */
 export const DocumentResource = (data: CustomResourceData, editor: any): VNode => {
@@ -53,6 +54,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
     return h("div");
   }
 
+  const store = useStore();
+  
   const authStatusMapping = {
     1: h("div.document-auth", {}, [
       h("div.tip", {}, [h("i.freelog fl-icon-suoding"), h("div.auth-text", {}, [I18n("insert_msg_getauth")])]),
@@ -61,7 +64,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -75,7 +78,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -90,7 +93,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -104,7 +107,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -124,8 +127,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
                 type: "resource",
                 versionRange: data.version || data.latestVersion,
               };
-              editor.addRely(target);
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.addRely(target);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },

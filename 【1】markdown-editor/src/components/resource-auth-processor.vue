@@ -100,10 +100,6 @@ const data = reactive({
   pendingContractPopupShow: false,
 });
 
-onMounted(() => {
-  getData();
-});
-
 /** 所有已选择的策略 */
 const allSelectPolicyList = computed(() => {
   const result: any[] = [];
@@ -174,33 +170,47 @@ const getData = async () => {
   const resourceDraft = await ResourceService.getResourceDraftData(resourceId);
   if (!resourceDraft) return;
 
-  const { directDependencies = [], baseUpcastResources = [] } = resourceDraft.draftData;
   let deps: any[] = [];
+  const { directDependencies = [], baseUpcastResources = [] } = resourceDraft.draftData;
   const dependencesByIdentify = getDependencesByContent(store.markdown);
+
+  store.contentDeps.forEach((item) => {
+    const isExistContent = dependencesByIdentify.findIndex((dep) => dep === item) !== -1;
+    if (isExistContent) return;
+
+    const index = directDependencies.findIndex((dep: any) => dep.name === item);
+    if (index === -1) return;
+
+    directDependencies.splice(index, 1);
+  });
+
+
   if (dependencesByIdentify.length) {
     const resourceData = await ResourceService.getResourceDataBatch({ resourceNames: dependencesByIdentify.join() });
     if (resourceData) {
-      const depsInContent = resourceData.map((dep: any) => {
+      const contentDeps = resourceData.map((dep: any) => {
         const { resourceId, resourceName, latestVersion } = dep;
         return { id: resourceId, name: resourceName, type: "resource", versionRange: `^${latestVersion}` };
       });
       const depsInStatement: any[] = [];
       directDependencies.forEach((item: any) => {
-        const dep = depsInContent.find((depInContent: any) => depInContent.name === item.name);
+        const dep = contentDeps.find((depInContent: any) => depInContent.name === item.name);
         if (dep) {
           dep.versionRange = item.versionRange;
           return;
         }
 
         depsInStatement.push(item);
-        store.statementDep.push(item.id);
       });
-      deps = [...depsInContent, ...depsInStatement];
+      deps = [...contentDeps, ...depsInStatement];
+      store.contentDeps = contentDeps.map((item: any) => item.name);
       if (deps.length !== directDependencies.length) saveDepUpdate();
     }
   } else {
     deps = [...directDependencies];
+    store.contentDeps = [];
   }
+
   store.deps = [...deps];
   store.upcasts = [...baseUpcastResources];
   dealDepData();
@@ -303,9 +313,7 @@ const dealDepData = async () => {
       const userIndex = UserRes.findIndex((user: any) => user.userId === userId);
       if ([0, 2, 4].includes(status)) {
         dep.error = statusMapping[status];
-      } else if (
-        store.editor.resourceData.baseUpcastResources.some((upcast: any) => upcast.resourceID === dep.resourceId)
-      ) {
+      } else if (store.resourceData.baseUpcastResources.some((upcast: any) => upcast.resourceID === dep.resourceId)) {
         dep.error = "upcast";
       } else if (!cycleRes[cycleIndex]) {
         dep.error = "cycle";
@@ -407,12 +415,13 @@ const dealAuth = async () => {
   const res = await ContractService.createContractBatch(params);
   if (!res) return (data.signing = false);
 
+  store.updateBecauseRely = true;
   dealDepData();
 };
 
 /** 关闭授权抽屉 */
 const closePolicyDrawer = () => {
-  store.editor.setPolicyDrawer(false);
+  store.editorFuncs.setPolicyDrawer(false);
 };
 
 /** 修改依赖版本范围 */
@@ -422,6 +431,7 @@ const changeVersion = (version: string, dep: any) => {
   const storeDep = store.deps.find((item) => item.id === dep.resourceId);
   if (storeDep) storeDep.versionRange = version;
 
+  store.updateBecauseRely = true;
   saveDepUpdate();
 };
 
@@ -436,6 +446,7 @@ const deleteDep = (dep: any) => {
   const storeDepIndex = store.deps.findIndex((item) => item.id === dep.resourceId);
   if (storeDepIndex !== -1) store.deps.splice(storeDepIndex, 1);
 
+  store.updateBecauseRely = true;
   saveDepUpdate();
 };
 
@@ -492,11 +503,13 @@ const paySuccess = async (contractId: string) => {
 
 /** 立即保存依赖变动 */
 const saveDepUpdate = () => {
-  const { resourceId } = store.editor.resourceData;
+  const { resourceId } = store.resourceData;
   store.draftData.directDependencies = store.deps;
   store.draftData.baseUpcastResources = store.upcasts;
   ResourceService.saveResourceDraftData(resourceId, store.draftData);
 };
+
+getData();
 </script>
 
 <style lang="scss" scoped>

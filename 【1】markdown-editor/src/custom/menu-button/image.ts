@@ -1,6 +1,7 @@
 /** 编辑器自定义菜单按钮-插入图片资源 */
 
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 import { IButtonMenu, IDomEditor } from "@wangeditor/editor";
 
 class ImageMenuBtn implements IButtonMenu {
@@ -27,8 +28,9 @@ class ImageMenuBtn implements IButtonMenu {
     
     return disabled;
   }
-  exec(editor: any) {
-    editor.setResourceDrawerType("image");
+  exec() {
+    const store = useStore();
+    store.editorFuncs.setResourceDrawerType("image");
   }
 }
 

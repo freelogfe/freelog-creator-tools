@@ -314,7 +314,7 @@ export interface UploadFileData {
 }
 
 /** 自定义 - 存储对象上传数据 */
-export interface UploadBucketObjectData {
+export interface UploadBucketObjectData extends Partial<BucketObject> {
   uid: number;
   sha1: string;
   name: string;

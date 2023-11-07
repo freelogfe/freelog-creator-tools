@@ -1,5 +1,5 @@
 <template>
-  <div class="creator-tools-markdown-editor" @click="store.editor.focus()">
+  <div class="creator-tools-markdown-editor" @click="store.editor?.focus()">
     <!-- header -->
     <div class="header">
       <div class="title" @click="consoleMarkdown">{{ I18n("title_edit_post") }}</div>
@@ -24,20 +24,36 @@
       </div>
     </div>
 
+    <!-- loader -->
+    <div class="loader-box" v-if="data.loading">
+      <div class="fake-toolbar">
+        <div class="fake-toolbar-box">
+          <div class="item large" />
+          <div class="item" />
+          <div class="divider" />
+          <div class="item" v-for="_ in 3" />
+          <div class="divider" />
+          <div class="item" v-for="_ in 2" />
+          <div class="divider" />
+          <div class="item" v-for="_ in 9" />
+          <div class="divider" />
+          <div class="item" v-for="_ in 2" />
+        </div>
+      </div>
+      <div class="mask" />
+      <div class="loader-tip">
+        <i class="freelog fl-icon-loading" />
+        <div class="tip">{{ I18n("posteditor_msg_loading ") }}</div>
+      </div>
+    </div>
+
     <!-- 编辑器工具栏 -->
     <div class="editor-toolbar">
       <Toolbar :editor="store.editor" :defaultConfig="toolbarConfig" />
     </div>
 
     <!-- 编辑器 -->
-    <div class="markdown-editor">
-      <Editor
-        v-model="data.html"
-        :defaultConfig="editorConfig"
-        @onCreated="createEditor"
-        @onDestroyed="destroyEditor"
-      />
-    </div>
+    <div id="editor" class="markdown-editor" />
 
     <!-- 插入资源弹窗 -->
     <InsertResourceDrawer :show="data.resourceDrawerShow" :type="data.resourceDrawerType" />
@@ -51,6 +67,7 @@
 </template>
 
 <script lang="ts" setup>
+console.time("总时间");
 import { defineAsyncComponent, onBeforeUnmount, onMounted, reactive, watch } from "vue";
 import { useStore } from "@/store";
 import { formatDate } from "@/utils/common";
@@ -58,7 +75,7 @@ import { I18n } from "@/api/I18n";
 import { toolbarConfig, editorConfig } from "@/core/editor-config";
 import "@wangeditor/editor/dist/css/style.css";
 import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
-import { i18nChangeLanguage } from "@wangeditor/editor";
+import { createEditor, i18nChangeLanguage } from "@wangeditor/editor";
 import { ResourceService, StorageService } from "@/api/request";
 import { CustomResourceData } from "@/typings/object";
 import { importDoc } from "@/core/resource";
@@ -91,6 +108,7 @@ const store = useStore();
 const LANGUAGE_MAPPING: Record<Language, string> = { "zh-cn": "zh-CN", "en-us": "en" };
 
 const data = reactive({
+  loading: false,
   html: "",
   saveType: 0,
   lastSaveTime: 0,
@@ -120,6 +138,9 @@ onBeforeUnmount(() => {
 
 /** 输出 markdown */
 const consoleMarkdown = () => {
+  const env = process.env.NODE_ENV;
+  if (env !== "development") return;
+
   console.log("原HTML文本===>\n", data.html);
   console.log("markdown文本===>\n", store.markdown);
 };
@@ -134,42 +155,131 @@ const keydown = (e: KeyboardEvent) => {
   }
 };
 
-/** 创建编辑器 */
-const createEditor = (editor: any) => {
+/** 初始化编辑器方法 */
+const initFuncs = () => {
+  data.loading = true;
   const language = LANGUAGE_MAPPING[store.language as Language];
   i18nChangeLanguage(language);
 
   // markdown 转换器
-  editor.converter = new showdown.Converter();
+  store.editorFuncs.converter = new showdown.Converter();
+  // 初始化编辑器
+  store.editorFuncs.initEditor = initEditor;
   // 添加依赖
-  editor.addRely = addRely;
-  // 需要处理授权的资源
-  editor.deps = null;
+  store.editorFuncs.addRely = addRely;
   // 控制资源弹窗
-  editor.setResourceDrawerType = (type: string) => {
+  store.editorFuncs.setResourceDrawerType = (type: string) => {
     data.resourceDrawerType = type;
     data.resourceDrawerShow = !!type;
-    if (!data.resourceDrawerShow) editor.focus();
+    if (!data.resourceDrawerShow) store.editor.focus();
   };
   // 控制导入弹窗
-  editor.setImportDrawer = (show: boolean) => {
+  store.editorFuncs.setImportDrawer = (show: boolean) => {
     data.importDrawerShow = show;
-    if (!show) editor.focus();
+    if (!show) store.editor.focus();
   };
   // 控制依赖授权弹窗
-  editor.setPolicyDrawer = async (show: boolean, resource?: CustomResourceData) => {
-    if (!show) {
-      const html = await importDoc({ content: store.markdown, type: "draft" });
-      data.html = html;
-      data.policyDrawerShow = false;
-      editor.focus();
-    }
+  store.editorFuncs.setPolicyDrawer = async (show: boolean, resource?: CustomResourceData) => {
     data.policyDrawerShow = show;
+
+    if (show) {
+      store.relyIdAutoOpen = resource?.resourceId || "";
+      return;
+    }
+
+    if (store.updateBecauseRely) {
+      console.time("总时间");
+      store.updateBecauseRely = false;
+      getFileContent();
+    } else {
+      store.editor.focus();
+    }
   };
 
-  store.editor = editor;
+  getResourceData();
+};
 
-  getData();
+/** 获取资源与草稿数据 */
+const getResourceData = async () => {
+  data.disabled = true;
+
+  console.time("请求资源数据时间");
+  const { resourceId } = store;
+  const [resourceData, resourceDraft] = await Promise.all([
+    ResourceService.getResourceData(resourceId),
+    ResourceService.getResourceDraftData(resourceId),
+  ]);
+  if (!resourceData || !resourceDraft) return;
+
+  store.resourceData = resourceData;
+  store.draftData = resourceDraft.draftData;
+  console.timeEnd("请求资源数据时间");
+
+  getFileContent();
+};
+
+/** 获取文件内容 */
+const getFileContent = async () => {
+  data.loading = true;
+  console.time("请求文件时间");
+  const { selectedFileInfo } = store.draftData;
+  if (!selectedFileInfo || !selectedFileInfo.sha1) {
+    initEditor();
+    return;
+  }
+
+  const content = await StorageService.getStorageFile(selectedFileInfo.sha1);
+  console.timeEnd("请求文件时间");
+  console.time("解析内容时间");
+  const html = await importDoc({ content, type: "draft" });
+  console.timeEnd("解析内容时间");
+
+  initEditor(html);
+};
+
+/** 初始化编辑器 */
+const initEditor = async (html = "", saveNow = false) => {
+  store.editor?.destroy();
+  data.loading = true;
+  setTimeout(() => {
+    console.time("渲染内容时间");
+    store.editor = createEditor({
+      selector: "#editor",
+      html,
+      config: {
+        onChange(editor) {
+          // findDeletedCustomNode(editor);
+          data.html = editor.getHtml();
+        },
+        onCreated() {
+          setTimeout(() => {
+            if (saveNow) save();
+          }, 0);
+        },
+        onDestroyed: () => destroyEditor(),
+      },
+    });
+    console.timeEnd("渲染内容时间");
+    console.timeEnd("总时间");
+    data.loading = false;
+
+    setTimeout(() => {
+      data.disabled = false;
+    }, 0);
+  }, 500);
+};
+
+/** 检测删除的自定义节点 */
+const findDeletedCustomNode = (editor: any) => {
+  const { undos } = editor.history;
+  if (!undos.length) return;
+
+  const removeNodes = undos[undos.length - 1].filter(
+    (list: any) => list.type === "remove_node" && list.node.type === "resource" && !list.done
+  );
+  if (!removeNodes.length) return;
+
+  removeNodes.forEach((item: any) => (item.done = true));
 };
 
 /** 销毁编辑器 */
@@ -178,40 +288,9 @@ const destroyEditor = () => {
   store.editor = null;
 };
 
-/** 获取资源与草稿数据 */
-const getData = async () => {
-  data.disabled = true;
-  const { resourceId } = store;
-  const resourceData = await ResourceService.getResourceData(resourceId);
-  if (!resourceData) return;
-
-  store.editor.resourceData = resourceData;
-
-  const resourceDraft = await ResourceService.getResourceDraftData(resourceId);
-  if (!resourceDraft) return;
-
-  store.draftData = resourceDraft.draftData;
-  const { selectedFileInfo } = resourceDraft.draftData;
-  if (!selectedFileInfo) {
-    data.html = "";
-    data.disabled = false;
-    store.editor.focus();
-    return;
-  }
-
-  const content = await StorageService.getStorageFile(selectedFileInfo.sha1);
-  const html = await importDoc({ content, type: "draft" });
-  data.html = html;
-  setTimeout(() => {
-    data.disabled = false;
-    store.editor.focus();
-  }, 0);
-};
-
 /** 保存 */
 const save = async () => {
-  const { draftData, editor, resourceId } = store;
-  const { resourceData } = editor;
+  const { draftData, resourceId, resourceData } = store;
   if (!draftData) return;
 
   if (data.inputTimer) {
@@ -228,6 +307,10 @@ const save = async () => {
   if (!fileName) {
     // 草稿数据中没有文件名称，说明是新建文件，文件名称命名规则为{资源名称 最后保存时间}
     fileName = resourceData.resourceName.split("/")[1] + formatDate(saveTime, "YYYYMMDDhhmm").substring(2) + ".md";
+  } else if (!fileName.endsWith(".md")) {
+    const nameArr = fileName.split(".");
+    nameArr.pop();
+    fileName = nameArr.join(".") + ".md";
   }
   const res = await StorageService.uploadStorageFile(new File([store.markdown], fileName));
   if (!res) return;
@@ -260,22 +343,13 @@ const exit = () => {
 
 /** 添加依赖 */
 const addRely = async (dep: any) => {
-  const index = store.statementDep.findIndex((item) => item === dep.resourceId);
-  // 申明类的依赖被插入内容中，该依赖不再视为申明类依赖，不再被保护
-  if (index !== -1) store.statementDep.splice(index, 1);
+  const index = store.deps.findIndex((item) => item === dep.id);
+  if (index !== -1) return;
   store.deps.push(dep);
+  store.updateBecauseRely = true;
 };
 
-watch(
-  () => data.disabled,
-  (cur) => {
-    if (cur) {
-      store.editor.disable();
-    } else {
-      store.editor.enable();
-    }
-  }
-);
+initFuncs();
 
 watch(
   () => data.html,
@@ -408,6 +482,87 @@ watch(
         &:active {
           background: #e6e6e6;
         }
+      }
+    }
+  }
+
+  .loader-box {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 78px;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+
+    .fake-toolbar {
+      width: 100%;
+      height: 54px;
+      background: rgba(0, 0, 0, 0.02);
+      display: flex;
+      justify-content: center;
+
+      .fake-toolbar-box {
+        width: 1100px;
+        padding: 0 5px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .item {
+          width: 32px;
+          height: 32px;
+          background: rgba(0, 0, 0, 0.06);
+          border-radius: 4px;
+
+          &.large {
+            width: 56px;
+          }
+        }
+
+        .divider {
+          width: 1px;
+          height: 16px;
+          background-color: rgba(0, 0, 0, 0.2);
+          margin: 0 20px;
+        }
+      }
+    }
+
+    .mask {
+      width: 100%;
+      flex: 1;
+      background-color: #fff;
+    }
+
+    .loader-tip {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 360px;
+      height: 200px;
+      border-radius: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+
+      .freelog {
+        font-size: 48px;
+        color: #fff;
+        animation: rotate 1s linear infinite;
+      }
+
+      .tip {
+        font-size: 14px;
+        color: #ffffff;
+        line-height: 20px;
+        margin-top: 30px;
       }
     }
   }

@@ -16,7 +16,7 @@ export const insertResource = async (data: Resource) => {
     type: "resource",
     versionRange: version || latestVersion,
   };
-  await store.editor.addRely(target);
+  await store.editorFuncs.addRely(target);
 
   const authType: 1 | 2 | 3 | 4 | 5 | 6 = await getAuthType(resourceId);
 
@@ -351,7 +351,7 @@ export const getDependencesByContent = (content: string): string[] => {
   const audioList = content.matchAll(/<audio[^>]*?src=['"]freelog:\/\/(\S*)?['"][^>]*?>/gi);
   getMatchAllContent(audioList, list);
   // 匹配文档依赖（{{}}）
-  const docList = content.matchAll(/{{freelog:\/\/(\S*)?}}/gi);
+  const docList = content.matchAll(/{{freelog:\/\/([^}}]*)?}}/gi);
   getMatchAllContent(docList, list);
 
   // 依赖列表（去重）
@@ -521,7 +521,7 @@ const md2Html = (markdown: string) => {
   const store = useStore();
 
   // 保留空行
-  let result = store.editor.converter.makeHtml(markdown);
+  let result = store.editorFuncs.converter.makeHtml(markdown);
 
   // 将删除线 <del> 改为 <s>
   result = result.replace(/<del>/gi, "<s>").replace(/<\/del>/gi, "</s>");

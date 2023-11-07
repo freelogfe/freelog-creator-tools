@@ -1,6 +1,7 @@
 /** 编辑器自定义菜单按钮-获取授权 */
 
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 import { IButtonMenu } from "@wangeditor/editor";
 
 class PolicyBtnMenu implements IButtonMenu {
@@ -24,8 +25,9 @@ class PolicyBtnMenu implements IButtonMenu {
   isDisabled(): boolean {
     return false;
   }
-  exec(editor: any) {
-    editor.setPolicyDrawer(true);
+  exec() {
+    const store = useStore();
+    store.editorFuncs.setPolicyDrawer(true);
   }
 }
 

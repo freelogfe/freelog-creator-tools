@@ -8,7 +8,7 @@
     :size="700"
     :before-close="closeDrawer"
   >
-    <div class="drawer">
+    <div class="drawer" @click="clickDrawer" v-if="data.show">
       <div class="drawer-header">
         <div class="title">{{ I18n("title_import_post") }}</div>
         <i class="freelog fl-icon-guanbi close-btn" @click="closeDrawer" />
@@ -19,7 +19,13 @@
           <el-tab-pane :label="I18n('importpost_tab_fromlocal')" name="upload">
             <div class="upload-area">
               <div class="upload-frame">
-                <input class="uploader" type="file" id="uploadLocalImg" accept=".md,.txt" @change="uploadLocalFile" />
+                <input
+                  class="uploader"
+                  type="file"
+                  id="uploadLocalFileInMarkdownEditor"
+                  accept=".md,.txt"
+                  @change="uploadLocalFile"
+                />
 
                 <div class="upload-box" :class="{ normal: data.uploadStatus === 1 }">
                   <div class="tip">{{ I18n("msg_import_post_from_local") }}</div>
@@ -62,6 +68,7 @@
               :active="data.activeTab === 'bucket'"
               operateType="import"
               type="text"
+              :closeSubPopup="data.closeSubPopup"
               @select="importFromObject"
             />
           </el-tab-pane>
@@ -87,7 +94,6 @@
                       :confirm-button-text="I18n('btn_import_post')"
                       :cancel-button-text="I18n('btn_cancel')"
                       @confirm="importFromHistory(item)"
-                      teleported
                       width="500"
                     >
                       <template #reference>
@@ -108,7 +114,7 @@
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
 import { Resource, ResourceVersion, UploadFileData } from "@/typings/object";
-import { defineAsyncComponent, reactive, watch, computed } from "vue";
+import { defineAsyncComponent, reactive, watch, computed, shallowRef } from "vue";
 import { ResourceService, StorageService } from "@/api/request";
 import { useStore } from "@/store";
 import { importDoc } from "@/core/resource";
@@ -129,6 +135,7 @@ const data = reactive({
   importFile: null as UploadFileData | null,
   uploadStatus: 1,
   historyList: [] as ResourceVersion[],
+  closeSubPopup: 0,
 });
 
 /** 需要显示的历史版本 */
@@ -141,12 +148,20 @@ const historyListToShow = computed(() => {
 
 /** 关闭抽屉 */
 const closeDrawer = () => {
-  store.editor.setImportDrawer(false);
+  data.closeSubPopup++;
+  setTimeout(() => {
+    store.editorFuncs.setImportDrawer(false);
+  }, 0);
+};
+
+/** 点击抽屉 */
+const clickDrawer = () => {
+  data.closeSubPopup++;
 };
 
 /** 选择本地文件 */
 const selectFile = () => {
-  document.getElementById("uploadLocalImg")!.click();
+  document.getElementById("uploadLocalFileInMarkdownEditor")!.click();
 };
 
 /** 上传文件 */
@@ -174,10 +189,10 @@ const importFromUpload = async () => {
   if (!data.importFile) return;
 
   const { content, name } = data.importFile;
-  if (content.length > 10 ** 5) {
-    ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
-    return;
-  }
+  // if (content.length > 10 ** 5) {
+  //   ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
+  //   return;
+  // }
 
   sureImport({ content, type: "upload", fileName: name });
 };
@@ -292,8 +307,12 @@ const sureImport = async (dataInfo: {
   }
 
   const html = await importDoc(dataInfo);
-  store.editor.setHtml(html);
   closeDrawer();
+  setTimeout(() => {
+    store.deps = [];
+    store.upcasts = [];
+    store.editorFuncs.initEditor(html, true);
+  }, 0);
 };
 
 /** 从存储对象导入文档 */
@@ -342,7 +361,10 @@ watch(
 watch(
   () => data.activeTab,
   (cur) => {
-    if (cur === "history") getHistoryVersion();
+    if (cur === "history") {
+      store.searchKey = "";
+      getHistoryVersion();
+    }
   }
 );
 </script>

@@ -5,6 +5,7 @@ import { h, VNode } from "snabbdom";
 import { ResourceToolbar } from "../toolbar";
 import { CustomResourceData } from "@/typings/object";
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 
 /** 音频资源 DOM */
 export const AudioResource = (data: CustomResourceData, editor: any): VNode => {
@@ -51,6 +52,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
     return h("div");
   }
 
+  const store = useStore();
+
   const authStatusMapping = {
     1: h("div.audio-auth", {}, [
       h("i.freelog fl-icon-suoding"),
@@ -60,7 +63,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -75,7 +78,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -91,7 +94,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -105,7 +108,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -125,8 +128,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
                 type: "resource",
                 versionRange: data.version || data.latestVersion,
               };
-              editor.addRely(target);
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.addRely(target);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },

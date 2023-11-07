@@ -7,6 +7,7 @@ import { DEFAULT_COVER } from "@/assets/data";
 import { CustomResourceData } from "@/typings/object";
 import { hashImgUrl } from "@/utils/common";
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 
 /** 图片资源 DOM */
 export const ImageResource = (data: CustomResourceData, editor: any): VNode => {
@@ -56,6 +57,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
     return h("div");
   }
 
+  const store = useStore();
+
   const authStatusMapping = {
     1: h("div.image-auth", {}, [
       h("i.freelog fl-icon-suoding"),
@@ -65,7 +68,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -80,7 +83,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -96,7 +99,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -110,7 +113,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -130,8 +133,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
                 type: "resource",
                 versionRange: data.version || data.latestVersion,
               };
-              editor.addRely(target);
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.addRely(target);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },

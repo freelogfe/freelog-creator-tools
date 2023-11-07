@@ -9,7 +9,7 @@
           <el-option v-for="item in data.bucketList" :key="item" :label="item" :value="item" />
         </el-select>
 
-        <el-popover :visible="data.uploadPopShow" width="fit-content" placement="bottom-start">
+        <el-popover :visible="data.uploadPopShow" width="fit-content" placement="bottom-start" transition="null">
           <div class="upload-bucket-selector">
             <template v-if="data.bucketList.length">
               <div class="tip">{{ I18n("msg_posteditor_upload_object") }}</div>
@@ -154,7 +154,7 @@ import StorageObject from "@/components/storage-object.vue";
 // const StorageObject = defineAsyncComponent(() => import("@/components/storage-object.vue"));
 
 const store = useStore();
-const props = defineProps(["active", "from", "type", "operateType"]);
+const props = defineProps(["active", "from", "type", "operateType", "closeSubPopup"]);
 const emit = defineEmits(["select"]);
 
 /** 列表每页数量 */
@@ -294,7 +294,7 @@ const beforeUpload = async (file: UploadRawFile) => {
       (["image", "audio", "video"].includes(props.type) && !file.type.startsWith(props.type)) ||
       (props.type === "text" && !file.name.endsWith(".md") && !file.name.endsWith(".txt"));
   } else if (props.operateType === "import") {
-    TYPE_ERROR = !file.type.endsWith(".md") && !file.name.endsWith(".txt");
+    TYPE_ERROR = !file.name.endsWith(".md") && !file.name.endsWith(".txt");
   }
   if (TYPE_ERROR) {
     ElMessage.warning(I18n("mdeditor_insert_error_format"));
@@ -372,9 +372,13 @@ const uploadCreate = async (task: UploadBucketObjectData, reUpload = false) => {
   // 创建存储对象
   const createResult = await StorageService.createObject({ bucketName, objectName: name, sha1 });
   if (createResult) {
-    const index = data.objectList.findIndex((item) => item.objectName === name);
-    if (index !== -1) data.objectList.splice(index, 1);
-    const object = await StorageService.searchObject(`${data.uploadBucket}/${name}`);
+    const objectIndex = data.objectList.findIndex((item) => item.objectName === name && item.bucketName === bucketName);
+    if (objectIndex !== -1) data.objectList.splice(objectIndex, 1);
+    const uploadIndex = data.uploadQueue.findIndex(
+      (item) => item.objectName === name && item.bucketName === bucketName && item.uploadStatus === "success"
+    );
+    if (uploadIndex !== -1) data.uploadQueue.splice(uploadIndex, 1);
+    const object = await StorageService.searchObject(`${bucketName}/${name}`);
     const i = data.uploadQueue.findIndex((item) => item.uid === uid);
     data.uploadQueue[i] = { ...object[0], uploadStatus: "success" };
   } else {
@@ -433,6 +437,13 @@ watch(
   () => data.newBucketName,
   () => {
     verifyBucketName();
+  }
+);
+
+watch(
+  () => props.closeSubPopup,
+  () => {
+    data.uploadPopShow = false;
   }
 );
 </script>

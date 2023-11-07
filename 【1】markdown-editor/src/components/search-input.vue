@@ -10,7 +10,7 @@
 
 <script lang="ts" setup>
 import { useStore } from "@/store";
-import { ref, watch, useAttrs } from "vue";
+import { ref, watch } from "vue";
 
 const store = useStore();
 const props = defineProps(["placeholder"]);

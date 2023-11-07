@@ -1,6 +1,7 @@
 /** 编辑器自定义菜单按钮-导入文档 */
 
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 import { IButtonMenu } from "@wangeditor/editor";
 
 class ImportDocumentBtnMenu implements IButtonMenu {
@@ -24,8 +25,9 @@ class ImportDocumentBtnMenu implements IButtonMenu {
   isDisabled(): boolean {
     return false;
   }
-  exec(editor: any) {
-    editor.setImportDrawer(true);
+  exec() {
+    const store = useStore();
+    store.editorFuncs.setImportDrawer(true);
   }
 }
 

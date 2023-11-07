@@ -235,8 +235,7 @@
             <div
               class="upcast-box"
               v-if="
-                store.editor.resourceData.status === 0 &&
-                (!data.currengRely.error || data.currengRely.error === 'offline')
+                store.resourceData.status === 0 && (!data.currengRely.error || data.currengRely.error === 'offline')
               "
             >
               <div class="upcast-btn" @click="operateUpcast(true)">
@@ -257,11 +256,12 @@
               </div>
             </template>
 
-            <div
+            <!-- <div
               class="view-terminate-btn"
               @click="viewTerminateContract"
               v-if="data.currengRely.terminatedContracts.length"
-            >
+            > -->
+            <div class="view-terminate-btn" @click="viewTerminateContract">
               {{ I18n("get_auth_btn_viewcontracthistory") }}
             </div>
 
@@ -313,7 +313,7 @@
 import { I18n } from "@/api/I18n";
 import { useStore } from "@/store";
 import { getDomain, toDetail } from "@/utils/common";
-import { computed, defineAsyncComponent, reactive, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, reactive, watch } from "vue";
 import Cover from "@/components/cover.vue";
 import { ContractService } from "@/api/request";
 import * as semver from "semver";
@@ -340,6 +340,10 @@ const data = reactive({
 });
 
 const upcasts = computed(() => store.upcasts.map((item) => item.resourceID));
+
+onMounted(() => {
+  if (props.data.resourceId === store.relyIdAutoOpen) openAuthDrawer(props.data)
+})
 
 /** 版本弹窗关闭 */
 const closePopup = () => {
@@ -422,8 +426,10 @@ const sure = () => {
     const { resourceId, resourceName } = data.currengRely;
     const upcastRely = { resourceID: resourceId, resourceName };
     store.upcasts.push(upcastRely);
+    store.updateBecauseRely = true;
   } else if (!data.upcast && index !== -1) {
     store.upcasts.splice(index, 1);
+    store.updateBecauseRely = true;
   }
   emit("updatePolicy", data.currengRely);
   data.policyDrawerShow = false;
@@ -436,7 +442,13 @@ const operateUpcast = (upcast: boolean) => {
 
 /** 查看已终止合约 */
 const viewTerminateContract = () => {
-  const url = `${getDomain("user")}/logged/contract`;
+  if (!data.currengRely) return;
+
+  const licensorName = encodeURIComponent(data.currengRely.resourceName);
+  const licenseeName = encodeURIComponent(store.resourceData.resourceName);
+  const url = `${getDomain(
+    "user"
+  )}/logged/contract?identityType=2&licensorName=${licensorName}&licenseeName=${licenseeName}`;
   window.open(url);
 };
 

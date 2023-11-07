@@ -1,6 +1,7 @@
 /** 编辑器自定义菜单按钮-插入文档资源 */
 
 import { I18n } from "@/api/I18n";
+import { useStore } from "@/store";
 import { IButtonMenu, IDomEditor } from "@wangeditor/editor";
 
 class DocumentBtnMenu implements IButtonMenu {
@@ -27,8 +28,9 @@ class DocumentBtnMenu implements IButtonMenu {
     
     return disabled;
   }
-  exec(editor: any) {
-    editor.setResourceDrawerType("text");
+  exec() {
+    const store = useStore();
+    store.editorFuncs.setResourceDrawerType("text");
   }
 }
 

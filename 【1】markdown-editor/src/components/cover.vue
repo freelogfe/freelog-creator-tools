@@ -11,7 +11,8 @@
       }"
       v-if="data.coverStyle"
     />
-    <img class="default-cover" v-lazy="props.src || DEFAULT_COVER" v-else />
+    <img class="default-cover" v-lazy="props.src" v-else-if="props.src" />
+    <img class="default-cover" :src="DEFAULT_COVER" v-else />
   </div>
 </template>
 

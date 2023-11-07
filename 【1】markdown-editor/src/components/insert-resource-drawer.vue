@@ -8,7 +8,7 @@
     :size="700"
     :before-close="closeDrawer"
   >
-    <div class="drawer">
+    <div class="drawer" @click="clickDrawer" v-if="data.show">
       <div class="drawer-header">
         <div class="title">{{ drawerTitle }}</div>
         <i class="freelog fl-icon-guanbi close-btn" @click="closeDrawer" />
@@ -33,6 +33,7 @@
               :active="data.activeTab === 'bucket'"
               operateType="insert"
               :type="props.type"
+              :closeSubPopup="data.closeSubPopup"
               @select="insertByObject"
             />
           </el-tab-pane>
@@ -80,6 +81,7 @@ const data = reactive({
   show: false,
   activeTab: "",
   url: "",
+  closeSubPopup: 0,
 });
 
 /** 需要显示的上传队列 */
@@ -92,22 +94,30 @@ const drawerTitle = computed(() => {
 
 /** 关闭抽屉 */
 const closeDrawer = () => {
-  store.editor.setResourceDrawerType("");
+  data.closeSubPopup++;
+  setTimeout(() => {
+    store.editorFuncs.setResourceDrawerType(false);
+  }, 0);
+};
+
+/** 点击抽屉 */
+const clickDrawer = () => {
+  data.closeSubPopup++;
 };
 
 /** 插入存储对象资源 */
 const insertByObject = async (item: { objectId: string }) => {
+  store.editor.focus();
   const url = `${getDomain("file")}/objects/${item.objectId}`;
   insertUrlResource(url, RESOURCE_MAPPING[props.type].resourceType);
   closeDrawer();
-  store.editor.focus();
 };
 
 /** 插入 url 资源 */
 const insertByUrl = () => {
+  store.editor.focus();
   insertUrlResource(data.url, RESOURCE_MAPPING[props.type].resourceType);
   closeDrawer();
-  store.editor.focus();
 };
 
 watch(
@@ -115,6 +125,13 @@ watch(
   (cur) => {
     data.show = cur;
     data.activeTab = cur ? "market" : "";
+  }
+);
+
+watch(
+  () => data.activeTab,
+  (cur) => {
+    if (cur !== "url") data.url = "";
   }
 );
 </script>

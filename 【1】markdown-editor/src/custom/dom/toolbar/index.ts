@@ -5,6 +5,7 @@ import { h, VNode } from "snabbdom";
 import { I18n } from "@/api/I18n";
 import { CustomResourceData } from "@/typings/object";
 import { getDomain, toDetail } from "@/utils/common";
+import { useStore } from "@/store";
 
 /** 资源工具栏 */
 export const ResourceToolbar = (data: CustomResourceData, editor: any): VNode => {
@@ -47,6 +48,8 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
     return h("div");
   }
 
+  const store = useStore();
+
   const authStatusMapping = {
     1: h("div.toolbar-auth", {}, [
       h(
@@ -54,7 +57,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -69,7 +72,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -84,7 +87,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -99,7 +102,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },
@@ -113,7 +116,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              editor.setPolicyDrawer(true, data);
+              store.editorFuncs.setPolicyDrawer(true, data);
             },
           },
         },

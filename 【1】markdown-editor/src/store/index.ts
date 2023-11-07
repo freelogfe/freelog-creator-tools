@@ -22,14 +22,22 @@ export const useStore = defineStore("store", () => {
     i18n: null as I18N | null,
     // 资源草稿数据
     draftData: {} as ResourceDraft,
+    // 资源数据
+    resourceData: null as any,
     // markdown 内容
     markdown: "",
+    // 编辑器方法
+    editorFuncs: {} as any,
     // 依赖资源
     deps: [] as any[],
     // 上抛资源
     upcasts: [] as any[],
-    // 申明类依赖
-    statementDep: [] as string[],
+    // 内容依赖
+    contentDeps: [] as string[],
+    // 自动打开依赖授权弹窗
+    relyIdAutoOpen: '',
+    // 是否因为依赖变动需要更新内容
+    updateBecauseRely: false,
     // 抽屉搜索关键词
     searchKey: "",
   });
@@ -37,6 +45,9 @@ export const useStore = defineStore("store", () => {
   const methods = {
     /** 初始化 store */
     async initStoreData(props: any) {
+      const env = process.env.NODE_ENV;
+      console.log(`running in ${env}`);
+
       const myWindow: any = window;
       const POWERED_BY_QIANKUN = myWindow.__POWERED_BY_QIANKUN__;
 

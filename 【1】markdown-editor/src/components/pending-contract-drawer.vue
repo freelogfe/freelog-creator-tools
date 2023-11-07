@@ -44,7 +44,7 @@
 
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
-import { defineAsyncComponent, reactive, useAttrs, watch } from "vue";
+import { defineAsyncComponent, reactive, watch } from "vue";
 import { ContractService } from "@/api/request";
 import Cover from "@/components/cover.vue";
 import ContractCard from "@/components/contract-card.vue";
