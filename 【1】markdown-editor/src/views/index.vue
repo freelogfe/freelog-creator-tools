@@ -6,7 +6,7 @@
       <div class="article-info">
         <div />
         <div>
-          <span v-if="!data.disabled">{{ I18n("label_wordscounter") }} {{ store.markdown.length }}</span>
+          <span v-if="!data.disabled">{{ I18n("label_wordscounter") }} {{ data.wordsCount }}</span>
         </div>
         <div>
           <span v-if="data.saveType === 1">{{ I18n("posteditor_state_saving") }}</span>
@@ -43,7 +43,7 @@
       <div class="mask" />
       <div class="loader-tip">
         <i class="freelog fl-icon-loading" />
-        <div class="tip">{{ I18n("posteditor_msg_loading ") }}</div>
+        <div class="tip">{{ I18n("posteditor_msg_loading") }}</div>
       </div>
     </div>
 
@@ -53,7 +53,7 @@
     </div>
 
     <!-- 编辑器 -->
-    <div id="editor" class="markdown-editor" />
+    <div id="markdownEditorWrapper" class="markdown-editor" />
 
     <!-- 插入资源弹窗 -->
     <InsertResourceDrawer :show="data.resourceDrawerShow" :type="data.resourceDrawerType" />
@@ -67,7 +67,6 @@
 </template>
 
 <script lang="ts" setup>
-console.time("总时间");
 import { defineAsyncComponent, onBeforeUnmount, onMounted, reactive, watch } from "vue";
 import { useStore } from "@/store";
 import { formatDate } from "@/utils/common";
@@ -85,6 +84,7 @@ import InsertResourceDrawer from "@/components/insert-resource-drawer.vue";
 import ImportDocDrawer from "@/components/import-doc-drawer.vue";
 import PolicyDrawer from "@/components/policy-drawer.vue";
 import { Language } from "@/typings/type";
+import { ElMessage } from "element-plus";
 
 // const InsertResourceDrawer = defineAsyncComponent(() => import("@/components/insert-resource-drawer.vue"));
 // const ImportDocDrawer = defineAsyncComponent(() => import("@/components/import-doc-drawer.vue"));
@@ -110,6 +110,7 @@ const LANGUAGE_MAPPING: Record<Language, string> = { "zh-cn": "zh-CN", "en-us": 
 const data = reactive({
   loading: false,
   html: "",
+  wordsCount: 0,
   saveType: 0,
   lastSaveTime: 0,
   disabled: false,
@@ -165,8 +166,6 @@ const initFuncs = () => {
   store.editorFuncs.converter = new showdown.Converter();
   // 初始化编辑器
   store.editorFuncs.initEditor = initEditor;
-  // 添加依赖
-  store.editorFuncs.addRely = addRely;
   // 控制资源弹窗
   store.editorFuncs.setResourceDrawerType = (type: string) => {
     data.resourceDrawerType = type;
@@ -187,13 +186,15 @@ const initFuncs = () => {
       return;
     }
 
-    if (store.updateBecauseRely) {
-      console.time("总时间");
-      store.updateBecauseRely = false;
-      getFileContent();
-    } else {
-      store.editor.focus();
-    }
+    // if (store.updateBecauseRely) {
+    //   store.updateBecauseRely = false;
+    //   const html = await importDoc({ content: store.markdown, type: "draft" });
+    //   initEditor(html);
+    // } else {
+    //   store.editor.focus();
+    // }
+    const html = await importDoc({ content: store.markdown, type: "draft" });
+    initEditor(html);
   };
 
   getResourceData();
@@ -203,7 +204,6 @@ const initFuncs = () => {
 const getResourceData = async () => {
   data.disabled = true;
 
-  console.time("请求资源数据时间");
   const { resourceId } = store;
   const [resourceData, resourceDraft] = await Promise.all([
     ResourceService.getResourceData(resourceId),
@@ -213,7 +213,6 @@ const getResourceData = async () => {
 
   store.resourceData = resourceData;
   store.draftData = resourceDraft.draftData;
-  console.timeEnd("请求资源数据时间");
 
   getFileContent();
 };
@@ -221,19 +220,27 @@ const getResourceData = async () => {
 /** 获取文件内容 */
 const getFileContent = async () => {
   data.loading = true;
-  console.time("请求文件时间");
   const { selectedFileInfo } = store.draftData;
   if (!selectedFileInfo || !selectedFileInfo.sha1) {
     initEditor();
     return;
   }
 
-  const content = await StorageService.getStorageFile(selectedFileInfo.sha1);
-  console.timeEnd("请求文件时间");
-  console.time("解析内容时间");
-  const html = await importDoc({ content, type: "draft" });
-  console.timeEnd("解析内容时间");
+  const fileData = await StorageService.getStorageFile(selectedFileInfo.sha1, true);
+  if (!["text/plain", "text/markdown"].includes(fileData.headers["content-type"])) {
+    ElMessage({
+      message: I18n("mdeditor_import_error_format"),
+      type: "warning",
+      duration: 1000
+    });
+    setTimeout(() => {
+      exit();
+    }, 1500);
+    return;
+  }
 
+  const content = fileData.data;
+  const html = await importDoc({ content, type: "draft" });
   initEditor(html);
 };
 
@@ -242,9 +249,8 @@ const initEditor = async (html = "", saveNow = false) => {
   store.editor?.destroy();
   data.loading = true;
   setTimeout(() => {
-    console.time("渲染内容时间");
     store.editor = createEditor({
-      selector: "#editor",
+      selector: "#markdownEditorWrapper",
       html,
       config: {
         onChange(editor) {
@@ -257,10 +263,9 @@ const initEditor = async (html = "", saveNow = false) => {
           }, 0);
         },
         onDestroyed: () => destroyEditor(),
+        ...editorConfig
       },
     });
-    console.timeEnd("渲染内容时间");
-    console.timeEnd("总时间");
     data.loading = false;
 
     setTimeout(() => {
@@ -312,7 +317,10 @@ const save = async () => {
     nameArr.pop();
     fileName = nameArr.join(".") + ".md";
   }
-  const res = await StorageService.uploadStorageFile(new File([store.markdown], fileName));
+  const res = await StorageService.uploadStorageFile({
+    file: new File([store.markdown], fileName),
+    extParams: { metaInfo: { WordCount: data.wordsCount } },
+  });
   if (!res) return;
 
   store.draftData.selectedFileInfo = {
@@ -341,12 +349,18 @@ const exit = () => {
   store.mainAppFuncs.closeEditor();
 };
 
-/** 添加依赖 */
-const addRely = async (dep: any) => {
-  const index = store.deps.findIndex((item) => item === dep.id);
-  if (index !== -1) return;
-  store.deps.push(dep);
-  store.updateBecauseRely = true;
+/** 统计字数（以WPS规则为准） */
+const countWords = (html: string) => {
+  html = html
+    .replace(/<br>/g, "\n")
+    .replace(/<\/(p|div|td|li|pre|blockquote|h[1-6])>/g, "\n")
+    .replace(/<[^>]*>/g, "");
+  const ChineseWords = html.match(/[^\x00-\xff]/g);
+  const ChineseWordsCount = ChineseWords?.length || 0;
+  html = html.replace(/[^\x00-\xff]/g, " ");
+  html = html.replace(/\s+/g, " ");
+  const otherWordsCount = html.split(" ").filter((item) => !!item).length;
+  data.wordsCount = ChineseWordsCount + otherWordsCount;
 };
 
 initFuncs();
@@ -354,6 +368,8 @@ initFuncs();
 watch(
   () => data.html,
   (cur) => {
+    countWords(cur);
+
     const newMarkdown = html2md(cur);
     if (store.markdown !== newMarkdown) {
       store.markdown = newMarkdown;

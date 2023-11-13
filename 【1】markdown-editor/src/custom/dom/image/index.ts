@@ -127,13 +127,6 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              const target = {
-                id: data.resourceId,
-                name: data.resourceName,
-                type: "resource",
-                versionRange: data.version || data.latestVersion,
-              };
-              store.editorFuncs.addRely(target);
               store.editorFuncs.setPolicyDrawer(true, data);
             },
           },

@@ -28,7 +28,7 @@ export const html2md = (htmlText: string) => {
       // 标记原文本中 <pre> 的内容
       markdownText = markdownText.replace(match![1], "`#preContent#`");
       // 匹配代码块的语言
-      const languageMatch = text.match(/language-(.*)?[\s'"]/i) || [];
+      const languageMatch = text.match(/language-([a-zA-Z]*)?[\s'"]/i) || [];
       // 获取代码块的语言
       const language = languageMatch[1] ? `${languageMatch[1]}[~wrap]` : "[~wrap]";
       // 去掉多余标签获得内容
@@ -131,7 +131,7 @@ export const html2md = (htmlText: string) => {
     .replace(/<meta>|<span>|<p>|<div>|<\/span>/gi, "");
 
   // 分割线：将 <hr> 转为 ---
-  markdownText = markdownText.replace(/<hr>|<hr\/>/gi, "---[~wrap]");
+  markdownText = markdownText.replace(/<hr>|<hr\/>/gi, "[~wrap]---[~wrap][~wrap]");
 
   // 粗体：将 <b>、<strong> 转为 **
   markdownText = markdownText.replace(/<b>|<strong>|<\/b>|<\/strong>/gi, "**");
@@ -297,7 +297,7 @@ const buildTable = (tableData: any[] | null = null) => {
     result += `|[~wrap]`;
   }
 
-  return result + `[~wrap]`;
+  return `[~wrap]` + result + `[~wrap]`;
 };
 
 /** 匹配所有遍历处理 */
@@ -306,7 +306,7 @@ const matchAllStep = (iterator: IterableIterator<RegExpMatchArray>, markdownText
   if (step.done) return markdownText;
 
   markdownText = markdownText.replace(step.value[1], "");
-  
+
   return matchAllStep(iterator, markdownText);
 };
 

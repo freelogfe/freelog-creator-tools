@@ -354,15 +354,18 @@ const uploadCreate = async (task: UploadBucketObjectData, reUpload = false) => {
   // 上传文件
   task.uploadStatus = "uploading";
   task.progress = 0;
-  const res = await StorageService.uploadStorageFile(file, {
-    onUploadProgress(progressEvent) {
-      const progress = Math.floor((progressEvent.loaded / progressEvent.total) * 100);
-      task.progress = progress;
-    },
-    cancelToken: new axios.CancelToken((cancel) => {
-      task.cancel = cancel;
-    }),
-  });
+  const res = await StorageService.uploadStorageFile(
+    { file },
+    {
+      onUploadProgress(progressEvent) {
+        const progress = Math.floor((progressEvent.loaded / progressEvent.total) * 100);
+        task.progress = progress;
+      },
+      cancelToken: new axios.CancelToken((cancel) => {
+        task.cancel = cancel;
+      }),
+    }
+  );
   if (!res) {
     // 上传失败
     task.uploadStatus = "fail";

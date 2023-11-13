@@ -3,7 +3,7 @@
 <template>
   <div class="storage-object-wrapper">
     <div class="info-area" v-if="['none', 'success'].includes(data.uploadStatus)">
-      <div class="object-name">
+      <div class="object-name" :title="`${data.bucketName}/${data.objectName}`">
         {{ `${data.bucketName}/${data.objectName}` }}
       </div>
       <div class="other-info">
@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="info-area" v-else>
-      <div class="object-name">{{ data.file.name }}</div>
+      <div class="object-name" :title="data.file.name">{{ data.file.name }}</div>
       <div class="other-info">
         {{ formatSize(data.file.size) }}
       </div>
@@ -123,6 +123,7 @@ const operate = () => {
   border-bottom: 1px solid #e5e7eb;
 
   .info-area {
+    width: 0;
     flex: 1;
 
     .object-name {
@@ -130,6 +131,9 @@ const operate = () => {
       font-weight: 600;
       color: #222222;
       line-height: 20px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .other-info {
@@ -145,7 +149,7 @@ const operate = () => {
     width: 141px;
     display: flex;
     align-items: center;
-    margin: 0 24px;
+    margin-left: 24px;
     font-size: 14px;
 
     &.success {
@@ -183,6 +187,7 @@ const operate = () => {
     font-weight: 600;
     color: #2784ff;
     line-height: 20px;
+    margin-left: 24px;
     cursor: pointer;
 
     &:hover {
@@ -200,6 +205,7 @@ const operate = () => {
     width: 58px;
     display: flex;
     justify-content: flex-end;
+    margin-left: 24px;
 
     .freelog {
       font-size: 16px;

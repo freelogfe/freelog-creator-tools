@@ -39,7 +39,7 @@
                     </div>
                     <div class="modal"></div>
                     <div class="icon-box">
-                      <img class="icon-png" src="../assets/images/object.png" />
+                      <img class="icon-png" src="@/assets/images/object.png" />
                     </div>
                   </div>
                   <div class="uploading-tip" v-if="data.uploadStatus === 2">{{ I18n("upload_state_uploading") }}</div>
@@ -169,6 +169,21 @@ const uploadLocalFile = (event: any) => {
   const file = event.target.files[0];
   // 清除上传缓存
   event.target.value = "";
+
+  const { size, name } = file;
+
+  if (size > 1024 ** 2 * 2) {
+    ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
+    return;
+  }
+
+  const arr = name.split(".");
+  const suffix = arr[arr.length - 1];
+  if (!["md", "txt"].includes(suffix.toLocaleLowerCase())) {
+    ElMessage.warning(I18n("mdeditor_import_error_format"));
+    return;
+  }
+
   data.uploadStatus = 2;
   setTimeout(() => {
     data.uploadStatus = 3;
@@ -189,11 +204,6 @@ const importFromUpload = async () => {
   if (!data.importFile) return;
 
   const { content, name } = data.importFile;
-  // if (content.length > 10 ** 5) {
-  //   ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
-  //   return;
-  // }
-
   sureImport({ content, type: "upload", fileName: name });
 };
 
@@ -306,8 +316,8 @@ const sureImport = async (dataInfo: {
     data.uploadStatus = 1;
   }
 
-  const html = await importDoc(dataInfo);
   closeDrawer();
+  const html = await importDoc(dataInfo);
   setTimeout(() => {
     store.deps = [];
     store.upcasts = [];

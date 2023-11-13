@@ -3,7 +3,7 @@
 <template>
   <div class="resource-card-wrapper" @click="insert">
     <Cover :src="coverImages[0]" />
-    <div class="name">{{ resourceTitle || resourceName }}</div>
+    <div class="name" :title="resourceTitle || resourceName">{{ resourceTitle || resourceName }}</div>
     <div class="info">
       <div>{{ arr2Str(resourceType, " / ") }}</div>
       <div>{{ I18n("latest_version") + " " + latestVersion }}</div>

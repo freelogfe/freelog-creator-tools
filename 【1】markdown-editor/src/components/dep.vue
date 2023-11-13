@@ -33,12 +33,11 @@
                   v-if="data.versionPopupShow"
                 >
                   <div class="triangle" />
-                  <div class="input-box" @click.stop>
+                  <div class="input-box">
                     <input
                       class="input"
                       v-model="data.versionRange"
-                      type="text"
-                      @focus="data.versionRangeSelector = true"
+                      @click.stop="data.versionRangeSelector = true"
                       @change="changeVersionRange"
                     />
                     <transition name="slide-down-fade">
@@ -313,7 +312,7 @@
 import { I18n } from "@/api/I18n";
 import { useStore } from "@/store";
 import { getDomain, toDetail } from "@/utils/common";
-import { computed, defineAsyncComponent, onMounted, reactive, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from "vue";
 import Cover from "@/components/cover.vue";
 import { ContractService } from "@/api/request";
 import * as semver from "semver";
@@ -326,7 +325,7 @@ const store = useStore();
 const props = defineProps(["data"]);
 const emit = defineEmits(["changeVersion", "delete", "updatePolicy", "paySuccess"]);
 
-const policyDrawer = document.getElementById("policyDrawer");
+const markdownPolicyDrawer = document.getElementById("markdownPolicyDrawer");
 
 const data = reactive({
   versionPopupShow: false,
@@ -342,8 +341,8 @@ const data = reactive({
 const upcasts = computed(() => store.upcasts.map((item) => item.resourceID));
 
 onMounted(() => {
-  if (props.data.resourceId === store.relyIdAutoOpen) openAuthDrawer(props.data)
-})
+  if (props.data.resourceId === store.relyIdAutoOpen) openAuthDrawer(props.data);
+});
 
 /** 版本弹窗关闭 */
 const closePopup = () => {
@@ -456,9 +455,9 @@ watch(
   () => data.versionPopupShow,
   (cur) => {
     if (cur) {
-      policyDrawer?.addEventListener("click", closePopup);
+      markdownPolicyDrawer?.addEventListener("click", closePopup);
     } else {
-      policyDrawer?.removeEventListener("click", closePopup);
+      markdownPolicyDrawer?.removeEventListener("click", closePopup);
     }
   }
 );

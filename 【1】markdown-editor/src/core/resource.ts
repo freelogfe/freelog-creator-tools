@@ -9,17 +9,7 @@ import { getDomain } from "@/utils/common";
 export const insertResource = async (data: Resource) => {
   const store = useStore();
   const { resourceId, resourceName, coverImages, resourceType, latestVersion, version } = data;
-
-  const target = {
-    id: resourceId,
-    name: resourceName,
-    type: "resource",
-    versionRange: version || latestVersion,
-  };
-  await store.editorFuncs.addRely(target);
-
   const authType: 1 | 2 | 3 | 4 | 5 | 6 = await getAuthType(resourceId);
-
   const insertData: CustomResourceData = {
     originType: 1,
     resourceId,
@@ -44,6 +34,8 @@ export const insertResource = async (data: Resource) => {
       insertData.content = await getRealContent(res, data);
     }
   }
+  const index = store.deps.findIndex((item) => item === resourceId);
+  if (index === -1) store.updateBecauseRely = true;
   store.editor.insertNode(insertData);
 };
 
@@ -347,7 +339,7 @@ export const getDependencesByContent = (content: string): string[] => {
   // 匹配视频依赖（<video）
   const videoList = content.matchAll(/<video[^>]*?src=['"]freelog:\/\/(\S*)?['"][^>]*?>/gi);
   getMatchAllContent(videoList, list);
-  // 匹配音频依赖（<video）
+  // 匹配音频依赖（<audio
   const audioList = content.matchAll(/<audio[^>]*?src=['"]freelog:\/\/(\S*)?['"][^>]*?>/gi);
   getMatchAllContent(audioList, list);
   // 匹配文档依赖（{{}}）
@@ -356,7 +348,7 @@ export const getDependencesByContent = (content: string): string[] => {
 
   // 依赖列表（去重）
   const dependencesList: string[] = [...new Set(list)];
-  
+
   return dependencesList;
 };
 
@@ -517,6 +509,19 @@ const customResourceHtml = (data: CustomResourceData) => {
 /** md 转 html */
 const md2Html = (markdown: string) => {
   if (!markdown) return "";
+
+  /**
+   * 空有序列表项，会导致 showdown 转换 html 错误：无法正确转换为 li
+   * 解决：添加一个空格进行干预，使其可以正确转换
+   */
+  markdown = markdown.replace(/^\d*\.\s*\n/g, "1.  \n");
+  markdown = markdown.replace(/\n\d*\.\s*\n/g, "\n1.  \n");
+  /**
+   * 空有序列表项，会导致 showdown 转换 html 错误：使列表与后文显示错误
+   * 解决：清除空有序列表项
+   */
+  markdown = markdown.replace(/^-\s*\n/g, "\n");
+  markdown = markdown.replace(/\n-\s*\n/g, "\n");
 
   const store = useStore();
 

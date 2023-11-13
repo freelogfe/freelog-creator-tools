@@ -5,7 +5,7 @@
     <ListSkeleton type="dep" v-if="data.loading" />
 
     <template v-if="!data.loading">
-      <div class="processor-body" v-if="store.deps.length">
+      <div class="processor-body" v-if="store.upcasts.length || store.deps.length">
         <div class="upcast-area" v-if="store.upcasts.length">
           <div class="title">
             {{ I18n("addrely_label_basicupcast") }}
@@ -23,27 +23,33 @@
           </div>
         </div>
 
-        <div class="btn-bar">
-          <div class="view-pending-contract-btn" @click="openPendingContractPopup" v-if="allPendingContractList.length">
-            <i class="freelog fl-icon-heyue1 contract-icon" />
-            {{ I18n("claim_rely_btn_check_authorization") }}
+        <template v-if="store.deps.length">
+          <div class="btn-bar">
+            <div
+              class="view-pending-contract-btn"
+              @click="openPendingContractPopup"
+              v-if="allPendingContractList.length"
+            >
+              <i class="freelog fl-icon-heyue1 contract-icon" />
+              {{ I18n("claim_rely_btn_check_authorization") }}
+            </div>
+            <div class="deal-btn" :class="{ disabled: allSelectPolicyList.length === 0 }" @click="dealAuth">
+              {{ I18n("claim_rely_btn_getauth") }}
+            </div>
           </div>
-          <div class="deal-btn" :class="{ disabled: allSelectPolicyList.length === 0 }" @click="dealAuth">
-            {{ I18n("claim_rely_btn_getauth") }}
-          </div>
-        </div>
 
-        <el-scrollbar class="dep-list">
-          <Dep
-            :data="item"
-            @changeVersion="changeVersion($event, item)"
-            @delete="deleteDep"
-            @updatePolicy="updatePolicy"
-            @paySuccess="paySuccess"
-            v-for="item in data.deps"
-            :key="item.resourceId"
-          />
-        </el-scrollbar>
+          <el-scrollbar class="dep-list">
+            <Dep
+              :data="item"
+              @changeVersion="changeVersion($event, item)"
+              @delete="deleteDep"
+              @updatePolicy="updatePolicy"
+              @paySuccess="paySuccess"
+              v-for="item in data.deps"
+              :key="item.resourceId"
+            />
+          </el-scrollbar>
+        </template>
       </div>
 
       <div class="no-dep-box" v-else>
@@ -76,7 +82,7 @@
 
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
-import { computed, defineAsyncComponent, onMounted, reactive } from "vue";
+import { computed, defineAsyncComponent, reactive } from "vue";
 import { useStore } from "@/store";
 import { ContractService, ResourceService, UserService } from "@/api/request";
 import { toDetail } from "@/utils/common";
@@ -184,7 +190,6 @@ const getData = async () => {
     directDependencies.splice(index, 1);
   });
 
-
   if (dependencesByIdentify.length) {
     const resourceData = await ResourceService.getResourceDataBatch({ resourceNames: dependencesByIdentify.join() });
     if (resourceData) {
@@ -204,7 +209,6 @@ const getData = async () => {
       });
       deps = [...contentDeps, ...depsInStatement];
       store.contentDeps = contentDeps.map((item: any) => item.name);
-      if (deps.length !== directDependencies.length) saveDepUpdate();
     }
   } else {
     deps = [...directDependencies];
@@ -213,6 +217,7 @@ const getData = async () => {
 
   store.deps = [...deps];
   store.upcasts = [...baseUpcastResources];
+  saveDepUpdate();
   dealDepData();
 };
 

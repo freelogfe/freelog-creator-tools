@@ -111,14 +111,18 @@ export class ResourceService {
 /** Storage 类接口 */
 export class StorageService {
   /** 获取存储对象 */
-  static getStorageFile(sha1: string) {
-    return Axios(`/v2/storages/files/${sha1}/download`, { method: "GET" });
+  static getStorageFile(sha1: string, origin = false) {
+    return Axios(`/v2/storages/files/${sha1}/download`, { method: "GET" }, origin);
   }
 
   /** 上传存储对象 */
-  static uploadStorageFile(file: File, config: AxiosRequestConfig = {}) {
+  static uploadStorageFile(fileData: { file: File; extParams?: { metaInfo: any } }, config: AxiosRequestConfig = {}) {
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", fileData.file);
+    if (fileData.extParams) {
+      const extParams = btoa(JSON.stringify(fileData.extParams));
+      data.append("extParams", extParams);
+    }
 
     return Axios(`/v2/storages/files/upload`, {
       method: "POST",

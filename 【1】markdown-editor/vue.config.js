@@ -3,6 +3,11 @@ const { name } = require("./package");
 const port = 8301;
 
 module.exports = {
+  // 解决子应用项目内的字体/图片在主应用 404 的问题
+  chainWebpack: (config) => {
+    config.module.rule('fonts').use('url-loader').loader('url-loader').options({}).end();
+    config.module.rule('images').use('url-loader').loader('url-loader').options({}).end();
+  },
   devServer: {
     port,
     disableHostCheck: true,

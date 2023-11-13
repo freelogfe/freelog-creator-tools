@@ -2,7 +2,7 @@
 
 <template>
   <el-drawer
-    id="policyDrawer"
+    id="markdownPolicyDrawer"
     class="policy-drawer-wrapper"
     v-model="data.show"
     :with-header="false"

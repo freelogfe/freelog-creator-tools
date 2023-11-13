@@ -57,7 +57,7 @@ export const getRequestDomain = () => {
 /** 获取对应环境域名 */
 export const getDomain = (firstDomain?: string) => {
   const env = process.env.NODE_ENV;
-  let domain = env === "production" ? "https://console.freelog.com" : "http://console.testfreelog.com";
+  let domain = env === "production" ? "//console.freelog.com" : "//console.testfreelog.com";
   if (firstDomain) domain = domain.replace("console", firstDomain);
 
   return domain;
