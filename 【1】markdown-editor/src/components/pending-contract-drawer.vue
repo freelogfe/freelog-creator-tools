@@ -91,6 +91,13 @@ watch(
     if (cur) getTransitionRecord();
   }
 );
+
+watch(
+  () => props.data,
+  (cur) => {
+    if (cur.length === 0) closeDrawer();
+  }
+);
 </script>
 
 <style lang="scss" scoped>

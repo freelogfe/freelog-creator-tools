@@ -326,14 +326,23 @@ const sureImport = async (dataInfo: {
 };
 
 /** 从存储对象导入文档 */
-const importFromObject = async (item: { objectId: string; objectName: string }) => {
-  const { objectId, objectName } = item;
-  const res = await StorageService.getObjectFile(objectId);
-  if (res.length > 10 ** 5) {
+const importFromObject = async (item: {
+  objectId: string;
+  objectName: string;
+  systemProperty: { fileSize: number };
+}) => {
+  const {
+    objectId,
+    objectName,
+    systemProperty: { fileSize },
+  } = item;
+
+  if (fileSize > 1024 ** 2 * 2) {
     ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
     return;
   }
 
+  const res = await StorageService.getObjectFile(objectId);
   data.importFile = { name: objectName, content: res };
   sureImport({ content: res, type: "object", fileName: objectName, objectId });
 };
@@ -351,11 +360,6 @@ const getHistoryVersion = async () => {
 const importFromHistory = async (item: { version: string; filename: string }) => {
   const { version, filename } = item;
   const res = await ResourceService.getResourceFile(store.resourceId, version);
-  if (res.length > 10 ** 5) {
-    ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
-    return;
-  }
-
   data.importFile = { name: filename, content: res };
   sureImport({ content: res, type: "resource", fileName: filename, resourceId: store.resourceId, version });
 };
