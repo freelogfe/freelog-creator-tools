@@ -26,7 +26,7 @@ export const insertResource = async (data: Resource) => {
   if (authType === 3) {
     if (["图片", "视频", "音频"].includes(resourceType[0])) {
       /** 媒体资源，获取 url */
-      const url = await getMediaUrl(resourceId, version || latestVersion);
+      const url = getMediaUrl(resourceId, version || latestVersion);
       insertData.content = url;
     } else if (["阅读"].includes(resourceType[0])) {
       /** 文本资源，获取内容 */
@@ -95,7 +95,7 @@ const getRealContent = async (content: string, data: Resource): Promise<string> 
       /** 媒体资源 */
       const regText = `src=[\'"]freelog://${dep.resourceName}[\'"]`;
       const reg = new RegExp(regText, "g");
-      const url = await getMediaUrl(dep.resourceId, dep.version);
+      const url = getMediaUrl(dep.resourceId, dep.version, data.resourceId);
       // controlslist="nodownload" oncontextmenu="return false" 为了将依赖资源里的下载按钮隐藏、右键菜单隐藏
       const replaceText = `src="${url}" controlslist="nodownload" oncontextmenu="return false"`;
       html = html.replace(reg, replaceText);
@@ -159,11 +159,14 @@ export const getAuthType = async (resourceId: string): Promise<1 | 2 | 3 | 4 | 5
  * 获取媒体资源 url
  * @param resourceId 资源 id
  * @param version 资源版本号
- * @param editor 编辑器实例
+ * @param licenseeId 被授权方 id
  */
-const getMediaUrl = async (resourceId: string, version: string) => {
-  const store = useStore();
-  const url = `${getDomain("file")}/resources/${resourceId}?version=${version}&licenseeId=${store.resourceId}`;
+const getMediaUrl = (resourceId: string, version: string, licenseeId?: string) => {
+  if (!licenseeId) {
+    const store = useStore();
+    licenseeId = store.resourceId;
+  }
+  const url = `${getDomain("file")}/resources/${resourceId}?version=${version}&licenseeId=${licenseeId}`;
 
   return url;
 };
@@ -231,6 +234,15 @@ export const importDoc = async (dataInfo: {
   if (type === "resource") {
     const { basicDeps } = await getDeps(resourceId, version);
     deps = basicDeps;
+  } else if (type === "draft") {
+    const store = useStore();
+    deps = [
+      ...store.deps
+        .filter((item) => !item.versionRange.startsWith("^"))
+        .map((item) => {
+          return { resourceId: item.id, resourceName: item.name, version: item.versionRange };
+        }),
+    ];
   }
 
   /** 循环处理 md 语法图片标记 */
@@ -285,7 +297,7 @@ const getInternalResources = (content: string) => {
   const imgContent = newContent.match(/<img[^>]*?>/gi) || [];
   // 储存视频（<video）
   const videoContent = newContent.match(/<video[^>]*?>/gi) || [];
-  // 储存音频（<video）
+  // 储存音频（<audio）
   const audioContent = newContent.match(/<audio[^>]*?>/gi) || [];
   // 储存文档（{{}}）
   const docContent = newContent.match(/{{[^}]*?}}/gi) || [];
@@ -380,7 +392,6 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
     // 从第一层依赖中找到当前处理的依赖信息
     const currentDep = deps.find((item) => item.resourceName === resourceName) || {};
     data = currentDep;
-
     // 请求依赖资源数据
     const resourceRes = await ResourceService.getResourceData(resourceName);
     if (resourceRes) {
@@ -408,7 +419,7 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
 
       if (["图片", "视频", "音频"].includes(type)) {
         /** 媒体资源 */
-        data.content = await getMediaUrl(resourceId, data.version);
+        data.content = getMediaUrl(resourceId, data.version);
       } else if (type === "阅读") {
         /** 文档资源 */
         const docContent = await getDocContent(resourceId, data.version);
@@ -419,27 +430,27 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
         // 请求文档依赖内容
         let promiseArr = [] as Promise<any>[];
         requestDeps.forEach(async (dep) => {
-          const depContent = await getDocContent(dep.resourceId, dep.version);
+          const depContent = getDocContent(dep.resourceId, dep.version);
           promiseArr.push(depContent);
         });
         const resArr = await Promise.all(promiseArr);
-
         /** 处理深层依赖，此类依赖无需处理为资源 dom，解析为 html 即可 */
-        allDeps.forEach(async (dep) => {
+        allDeps.forEach((dep) => {
           const isMedia = ["图片", "视频", "音频"].includes(dep.resourceType[0]);
 
           if (isMedia) {
             /** 媒体资源 */
-            const url = await getMediaUrl(dep.resourceId, dep.version);
+            const url = getMediaUrl(dep.resourceId, dep.version, resourceId);
             // 编辑器解析属性时，使用的 getAttribute 方法查询到双引号 " 截止，会导致字符串中的双引号错误地截断属性的 value，所以从 md 转为 html 时，属性值内的双引号需转为 ASCII 编码（&#34;）
             // controlslist="nodownload" oncontextmenu="return false" 为了将依赖资源里的下载按钮隐藏、右键菜单隐藏
             const replaceText = `src=&#34;${url}&#34; controlslist=&#34;nodownload&#34; oncontextmenu=&#34;return false&#34;`;
 
             /** 替换双引号引用文本 */
             let regText = `src=[\'"]freelog://${dep.resourceName}[\'"]`;
+            // 将资源名称中的括号()添加\
+            regText = regText.replace(/\(/g, "\\(").replace(/\)/g, "\\)");
             let reg = new RegExp(regText, "g");
             data.content = data.content.replace(reg, replaceText);
-
             /** 替换双引号 ASCII 编码 &#34; 的引用文本，此类文本从下文阅读内容替换时出现 */
             regText = `src=&#34;freelog://${dep.resourceName}&#34;`;
             reg = new RegExp(regText, "g");
@@ -449,7 +460,9 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
             const depResultIndex = requestDeps.findIndex((requestDep) => requestDep.versionId === dep.versionId);
             if (depResultIndex === -1) return;
 
-            const regText = `{{freelog://${requestDeps[depResultIndex].resourceName}}}`;
+            let regText = `{{freelog://${requestDeps[depResultIndex].resourceName}}}`;
+            // 将资源名称中的括号()添加\
+            regText = regText.replace(/\(/g, "\\(").replace(/\)/g, "\\)");
             const reg = new RegExp(regText, "g");
             const depResult = resArr[depResultIndex];
             const replaceText = md2Html(depResult);
@@ -476,6 +489,7 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
       content: url,
     };
   }
+
   return customResourceHtml(data);
 };
 
@@ -486,7 +500,8 @@ const customResourceHtml = (data: CustomResourceData) => {
    * 编辑器解析属性时，使用的 getAttribute 方法查询到双引号 " 截止，会导致字符串中的双引号错误地截断属性的 value
    * 所以从 md 转为 html 时，属性值内的双引号需转为 ASCII 编码（&#34;）
    */
-  const html = `<span
+  const html = `
+  <span
     data-w-e-type="resource"
     data-w-e-is-void
     data-w-e-is-inline

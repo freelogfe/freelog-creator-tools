@@ -27,10 +27,14 @@ export const DocumentResource = (data: CustomResourceData, editor: any): VNode =
     ]);
   } else if (data.authType === 3) {
     // 已授权通过
+    let content = data.content;
+    content = content.replace(/<img/g, "<p><img");
+    content = content.replace(/<video/g, '<p><video');
+    content = content.replace(/<audio/g, '<p><audio');
     return h("div.authorized-document", {}, [
       ResourceToolbar(data, editor),
       // 文档
-      h("div.document-area", { props: { innerHTML: data.content } }, [h("div#docContent")]),
+      h("div.document-area", { props: { innerHTML: content } }, [h("div#docContent")]),
     ]);
   } else {
     // 未授权通过
@@ -55,7 +59,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
   }
 
   const store = useStore();
-  
+
   const authStatusMapping = {
     1: h("div.document-auth", {}, [
       h("div.tip", {}, [h("i.freelog fl-icon-suoding"), h("div.auth-text", {}, [I18n("insert_msg_getauth")])]),

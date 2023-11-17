@@ -214,6 +214,10 @@ const getResourceData = async () => {
   store.resourceData = resourceData;
   store.draftData = resourceDraft.draftData;
 
+  const { directDependencies = [], baseUpcastResources = [] } = resourceDraft.draftData;
+  store.deps = [...directDependencies];
+  store.upcasts = [...baseUpcastResources];
+
   getFileContent();
 };
 
@@ -231,7 +235,7 @@ const getFileContent = async () => {
     ElMessage({
       message: I18n("mdeditor_import_error_format"),
       type: "warning",
-      duration: 1000
+      duration: 1000,
     });
     setTimeout(() => {
       exit();
@@ -263,7 +267,7 @@ const initEditor = async (html = "", saveNow = false) => {
           }, 0);
         },
         onDestroyed: () => destroyEditor(),
-        ...editorConfig
+        ...editorConfig,
       },
     });
     data.loading = false;
