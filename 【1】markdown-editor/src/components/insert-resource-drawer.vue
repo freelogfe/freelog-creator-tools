@@ -106,9 +106,10 @@ const clickDrawer = () => {
 };
 
 /** 插入存储对象资源 */
-const insertByObject = async (item: { objectId: string }) => {
+const insertByObject = async (item: { bucketName: string; objectName: string }) => {
+  const { bucketName, objectName } = item;
   store.editor.focus();
-  const url = `${getDomain("file")}/objects/${item.objectId}`;
+  const url = `${getDomain("file")}/objects/${bucketName}/${objectName}`;
   insertUrlResource(url, RESOURCE_MAPPING[props.type].resourceType);
   closeDrawer();
 };
