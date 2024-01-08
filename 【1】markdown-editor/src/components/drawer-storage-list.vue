@@ -65,10 +65,6 @@
       </div>
     </div>
 
-    <div class="title-area">
-      <div class="title">{{ RESOURCE_TYPE_MAPPING[props.type]?.bucketTitle }}</div>
-    </div>
-
     <div class="skeleton-area" v-if="data.loading">
       <ListSkeleton type="object" />
     </div>
@@ -78,24 +74,20 @@
 
       <el-scrollbar>
         <div class="list-area" v-infinite-scroll="getObjects" :infinite-scroll-immediate="false">
-          <StorageObject
-            :type="props.operateType"
-            :data="item"
-            @cancel="cancelUpload"
-            @upload="againUpload"
-            @update="uploadCreate"
-            @select="$emit('select', item)"
-            v-for="item in uploadQueueToShow"
-            :key="item.uid"
-          />
+          <div class="list-item" v-for="item in uploadQueueToShow" :key="item.uid">
+            <StorageObject
+              :type="props.operateType"
+              :data="item"
+              @cancel="cancelUpload"
+              @upload="againUpload"
+              @update="uploadCreate"
+              @select="$emit('select', item)"
+            />
+          </div>
 
-          <StorageObject
-            :type="props.operateType"
-            :data="item"
-            @select="$emit('select', item)"
-            v-for="item in data.objectList"
-            :key="item.objectId"
-          />
+          <div class="list-item" v-for="item in data.objectList" :key="item.objectId">
+            <StorageObject :type="props.operateType" :data="item" @select="$emit('select', item)" />
+          </div>
         </div>
       </el-scrollbar>
     </template>
@@ -140,18 +132,13 @@ import { StorageService } from "@/api/request";
 import { useStore } from "@/store";
 import { getFileSha1 } from "@/utils/common";
 import { ElMessage, UploadRawFile } from "element-plus";
-import { computed, defineAsyncComponent, nextTick, reactive, watch } from "vue";
+import { computed, nextTick, reactive, watch } from "vue";
 import axios from "axios";
 import { BucketObject, UploadBucketObjectData } from "@/typings/object";
 import SearchInput from "@/components/search-input.vue";
 import ListSkeleton from "@/components/list-skeleton.vue";
 import NoData from "@/components/no-data.vue";
 import StorageObject from "@/components/storage-object.vue";
-
-// const SearchInput = defineAsyncComponent(() => import("@/components/search-input.vue"));
-// const ListSkeleton = defineAsyncComponent(() => import("@/components/list-skeleton.vue"));
-// const NoData = defineAsyncComponent(() => import("@/components/no-data.vue"));
-// const StorageObject = defineAsyncComponent(() => import("@/components/storage-object.vue"));
 
 const store = useStore();
 const props = defineProps(["active", "from", "type", "operateType", "closeSubPopup"]);
@@ -465,6 +452,7 @@ watch(
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 30px;
 
     .left-header {
       display: flex;
@@ -523,22 +511,6 @@ watch(
     }
   }
 
-  .title-area {
-    width: 100%;
-    padding: 0 30px;
-    box-sizing: border-box;
-
-    .title {
-      width: 100%;
-      font-size: 12px;
-      font-weight: 600;
-      color: #7a869a;
-      padding: 30px 0 5px;
-      line-height: 18px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-  }
-
   .skeleton-area {
     flex: 1;
     height: 0;
@@ -556,11 +528,13 @@ watch(
   }
 
   .list-area {
-    flex: 1;
-    height: 0;
     width: 100%;
-    padding: 0 30px;
+    padding: 0 30px 30px;
     box-sizing: border-box;
+
+    .list-item + .list-item {
+      margin-top: 10px;
+    }
   }
 }
 

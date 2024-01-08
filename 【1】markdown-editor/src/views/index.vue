@@ -61,34 +61,35 @@
     <!-- 导入文档弹窗 -->
     <ImportDocDrawer :show="data.importDrawerShow" />
 
-    <!-- 授权弹窗 -->
-    <PolicyDrawer :show="data.policyDrawerShow" />
+    <!-- 依赖申明弹窗 -->
+    <DependenciesDeclaratorDrawer
+      :show="data.denpendenciesDeclaratorDrawerShow"
+      @close="data.denpendenciesDeclaratorDrawerShow = false"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, onBeforeUnmount, onMounted, reactive, watch } from "vue";
+import { onBeforeMount, onBeforeUnmount, reactive, watch } from "vue";
 import { useStore } from "@/store";
 import { formatDate } from "@/utils/common";
 import { I18n } from "@/api/I18n";
 import { toolbarConfig, editorConfig } from "@/core/editor-config";
 import "@wangeditor/editor/dist/css/style.css";
-import { Editor, Toolbar } from "@wangeditor/editor-for-vue";
+import { Toolbar } from "@wangeditor/editor-for-vue";
 import { createEditor, i18nChangeLanguage } from "@wangeditor/editor";
 import { ResourceService, StorageService } from "@/api/request";
 import { CustomResourceData } from "@/typings/object";
-import { importDoc } from "@/core/resource";
+import { getDependencesByContent, importDoc } from "@/core/resource";
 import showdown from "showdown";
 import { html2md } from "@/core/html2md";
 import InsertResourceDrawer from "@/components/insert-resource-drawer.vue";
 import ImportDocDrawer from "@/components/import-doc-drawer.vue";
-import PolicyDrawer from "@/components/policy-drawer.vue";
+import DependenciesDeclaratorDrawer from "@/components/dependencies-declarator-drawer.vue";
 import { Language } from "@/typings/type";
 import { ElMessage } from "element-plus";
-
-// const InsertResourceDrawer = defineAsyncComponent(() => import("@/components/insert-resource-drawer.vue"));
-// const ImportDocDrawer = defineAsyncComponent(() => import("@/components/import-doc-drawer.vue"));
-// const PolicyDrawer = defineAsyncComponent(() => import("@/components/policy-drawer.vue"));
+import { loadMicroApp } from "qiankun";
+import actions from "@/api/micro-state-actions";
 
 showdown.setOption("tables", true);
 showdown.setOption("tasklists", true);
@@ -105,7 +106,7 @@ editorConfig.placeholder = I18n("hint_posteditor_contentfiled");
 const store = useStore();
 
 /** 语言映射 */
-const LANGUAGE_MAPPING: Record<Language, string> = { "zh-cn": "zh-CN", "en-us": "en" };
+const LANGUAGE_MAPPING: Record<Language, string> = { zh_CN: "zh-CN", en_US: "en" };
 
 const data = reactive({
   loading: false,
@@ -118,12 +119,15 @@ const data = reactive({
   resourceDrawerType: "",
   resourceDrawerShow: false,
   importDrawerShow: false,
-  policyDrawerShow: false,
+  denpendenciesDeclaratorDrawerShow: false,
   inputTimer: null as any,
   stopTimer: null as any,
+  authorizationProcessorContainer: null as any,
+  authorizationProcessor: null as any,
 });
 
-onMounted(() => {
+onBeforeMount(() => {
+  loadAuthorizationProcessor();
   window.addEventListener("keydown", keydown);
   window.addEventListener("beforeunload", (e) => {
     if (data.edited) e.returnValue = "";
@@ -132,9 +136,22 @@ onMounted(() => {
 
 // 组件销毁时，及时销毁编辑器
 onBeforeUnmount(() => {
+  destroyAuthorizationProcessor();
   if (!store.editor) return;
 
   store.editor.destroy();
+});
+
+actions.onGlobalStateChange(async (cur) => {
+  if (!cur.authProcessorShow) {
+    if (store.updateBecauseRely) {
+      store.updateBecauseRely = false;
+      const html = await importDoc({ content: store.markdown, type: "draft" });
+      initEditor(html);
+    } else {
+      store.editor.focus();
+    }
+  }
 });
 
 /** 输出 markdown */
@@ -166,6 +183,8 @@ const initFuncs = () => {
   store.editorFuncs.converter = new showdown.Converter();
   // 初始化编辑器
   store.editorFuncs.initEditor = initEditor;
+  // 保存
+  store.editorFuncs.saveDeps = saveDeps;
   // 控制资源弹窗
   store.editorFuncs.setResourceDrawerType = (type: string) => {
     data.resourceDrawerType = type;
@@ -177,27 +196,118 @@ const initFuncs = () => {
     data.importDrawerShow = show;
     if (!show) store.editor.focus();
   };
-  // 控制依赖授权弹窗
-  store.editorFuncs.setPolicyDrawer = async (show: boolean, resource?: CustomResourceData) => {
-    data.policyDrawerShow = show;
+  // 控制依赖申明弹窗
+  store.editorFuncs.setDependenciesDeclaratorDrawer = async (show: boolean) => {
+    data.denpendenciesDeclaratorDrawerShow = show;
 
-    if (show) {
-      store.relyIdAutoOpen = resource?.resourceId || "";
-      return;
+    if (!show) {
+      if (store.updateBecauseRely) {
+        store.updateBecauseRely = false;
+        const html = await importDoc({ content: store.markdown, type: "draft" });
+        initEditor(html);
+      } else {
+        store.editor.focus();
+      }
     }
-
-    // if (store.updateBecauseRely) {
-    //   store.updateBecauseRely = false;
-    //   const html = await importDoc({ content: store.markdown, type: "draft" });
-    //   initEditor(html);
-    // } else {
-    //   store.editor.focus();
-    // }
-    const html = await importDoc({ content: store.markdown, type: "draft" });
-    initEditor(html);
+  };
+  // 控制授权处理弹窗
+  store.editorFuncs.setAuthorizationProcessorDrawer = async (show: boolean, resource: CustomResourceData) => {
+    if (show) {
+      const { resourceId, version } = resource;
+      const { directDependencies = [], baseUpcastResources = [] } = store.draftData;
+      const isDep = directDependencies.findIndex((item) => item.id === resourceId) !== -1;
+      const upcasts = baseUpcastResources.map((item) => item.resourceID);
+      actions.setGlobalState({
+        authProcessorShow: true,
+        licensorId: resourceId,
+        versionRange: version,
+        isDep,
+        upcasts,
+      });
+    }
   };
 
   getResourceData();
+};
+
+/** 加载授权处理器子应用 */
+const loadAuthorizationProcessor = () => {
+  if (data.authorizationProcessor?.getStatus() === "MOUNTED") return;
+  data.authorizationProcessorContainer = document.createElement("div");
+  data.authorizationProcessorContainer.id = "authorizationProcessorInMarkdownEditor";
+  document.body.appendChild(data.authorizationProcessorContainer);
+  const { resourceId } = store;
+  data.authorizationProcessor = loadMicroApp({
+    name: "authorizationProcessorInMarkdownEditor",
+    // entry: 'http://localhost:8402',
+    entry: process.env.VUE_APP_AUTHORIZATION_PROCESSOR,
+    container: data.authorizationProcessorContainer,
+    props: { licenseeId: resourceId, mainAppType: "resourceInMarkdownEditor", mainAppFuncs: { add, upcast, update } },
+  });
+};
+
+/**
+ * 添加依赖
+ * @param resourceData 资源数据
+ */
+const add = (resourceData: any) => {
+  const { resourceId, resourceName, latestVersion, upcasted, upcastList } = resourceData;
+  const { directDependencies = [], baseUpcastResources = [] } = store.draftData;
+  const upcastItem = { id: resourceId, name: resourceName, type: "resource", versionRange: "^" + latestVersion };
+  directDependencies.unshift(upcastItem);
+  if (upcasted && !baseUpcastResources.some((item) => item.resourceID === resourceId)) {
+    const upcastItem = { resourceID: resourceId, resourceName };
+    baseUpcastResources.push(upcastItem);
+  }
+  upcastList.forEach((upcast: any) => {
+    upcast.depType = "resource";
+    if (upcast.upcasted && !baseUpcastResources.some((item) => item.resourceID === upcast.resourceId)) {
+      const upcastItem = { resourceID: upcast.resourceId, resourceName: upcast.resourceName };
+      baseUpcastResources.push(upcastItem);
+    }
+  });
+  store.updateBecauseRely = true;
+  saveDeps();
+};
+
+/**
+ * 操作上抛
+ * @param id 授权方 id
+ * @param upcasted 是否上抛
+ */
+const upcast = (id: string, upcasted: boolean) => {
+  const { directDependencies = [], baseUpcastResources = [] } = store.draftData;
+  if (upcasted) {
+    const dep = directDependencies.find((item) => item.id === id);
+    if (!dep) return;
+
+    const upcastItem = { resourceID: id, resourceName: dep?.name };
+    baseUpcastResources.push(upcastItem);
+  } else {
+    const index = baseUpcastResources.findIndex((item) => item.resourceID === id);
+    baseUpcastResources.splice(index, 1);
+  }
+
+  store.updateBecauseRely = true;
+  saveDeps();
+};
+
+/**
+ * 更新依赖
+ * @param id 授权方 id
+ */
+const update = () => {
+  store.updateBecauseRely = true;
+};
+
+/** 销毁授权处理器子应用 */
+const destroyAuthorizationProcessor = () => {
+  if (data.authorizationProcessor?.getStatus() !== "MOUNTED") return;
+
+  data.authorizationProcessor.unmount();
+  data.authorizationProcessor = null;
+  document.body.removeChild(data.authorizationProcessorContainer);
+  data.authorizationProcessorContainer = null;
 };
 
 /** 获取资源与草稿数据 */
@@ -213,10 +323,6 @@ const getResourceData = async () => {
 
   store.resourceData = resourceData;
   store.draftData = resourceDraft.draftData;
-
-  const { directDependencies = [], baseUpcastResources = [] } = resourceDraft.draftData;
-  store.deps = [...directDependencies];
-  store.upcasts = [...baseUpcastResources];
 
   getFileContent();
 };
@@ -258,7 +364,6 @@ const initEditor = async (html = "", saveNow = false) => {
       html,
       config: {
         onChange(editor) {
-          // findDeletedCustomNode(editor);
           data.html = editor.getHtml();
         },
         onCreated() {
@@ -276,19 +381,6 @@ const initEditor = async (html = "", saveNow = false) => {
       data.disabled = false;
     }, 0);
   }, 500);
-};
-
-/** 检测删除的自定义节点 */
-const findDeletedCustomNode = (editor: any) => {
-  const { undos } = editor.history;
-  if (!undos.length) return;
-
-  const removeNodes = undos[undos.length - 1].filter(
-    (list: any) => list.type === "remove_node" && list.node.type === "resource" && !list.done
-  );
-  if (!removeNodes.length) return;
-
-  removeNodes.forEach((item: any) => (item.done = true));
 };
 
 /** 销毁编辑器 */
@@ -332,14 +424,18 @@ const save = async () => {
     sha1: res.sha1,
     from: `${I18n("label_last_modified_time")} ${formatDate(saveTime)}`,
   };
-  store.draftData.directDependencies = store.deps;
-  store.draftData.baseUpcastResources = store.upcasts;
   const saveDraftRes = await ResourceService.saveResourceDraftData(resourceId, store.draftData);
   if (!saveDraftRes) return;
 
   data.saveType = 2;
   data.lastSaveTime = saveTime;
   data.edited = false;
+};
+
+/** 保存依赖 */
+const saveDeps = async () => {
+  const { draftData, resourceId } = store;
+  ResourceService.saveResourceDraftData(resourceId, draftData);
 };
 
 /** 关闭编辑器 */
@@ -367,6 +463,38 @@ const countWords = (html: string) => {
   data.wordsCount = ChineseWordsCount + otherWordsCount;
 };
 
+/** 识别内容 */
+const identifyContent = () => {
+  const {
+    markdown,
+    dependencesInContent,
+    draftData: { directDependencies, baseUpcastResources },
+  } = store;
+  const dependencesByIdentify = getDependencesByContent(markdown);
+  const deleteDeps: string[] = [];
+  dependencesInContent.forEach((old) => {
+    const isExist = dependencesByIdentify.includes(old);
+    if (!isExist) deleteDeps.push(old);
+  });
+  if (deleteDeps.length) {
+    const deps: any[] = [];
+    const upcasts: any[] = [];
+    directDependencies.forEach((dep) => {
+      const deleted = deleteDeps.includes(dep.name);
+      if (!deleted) deps.push(dep);
+    });
+    baseUpcastResources.forEach((upcast) => {
+      const deleted = deleteDeps.includes(upcast.resourceName);
+      if (!deleted) upcasts.push(upcast);
+    });
+    store.draftData.directDependencies = deps;
+    store.draftData.baseUpcastResources = upcasts;
+    saveDeps();
+  }
+
+  store.dependencesInContent = dependencesByIdentify;
+};
+
 initFuncs();
 
 watch(
@@ -377,6 +505,7 @@ watch(
     const newMarkdown = html2md(cur);
     if (store.markdown !== newMarkdown) {
       store.markdown = newMarkdown;
+      identifyContent();
       if (data.disabled) return;
 
       data.edited = true;

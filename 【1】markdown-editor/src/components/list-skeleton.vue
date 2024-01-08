@@ -3,15 +3,13 @@
 <template>
   <div class="list-skeleton-wrapper">
     <template v-if="props.type === 'resource'">
-      <el-skeleton class="resource-item" animated v-for="item in 4" :key="item">
+      <el-skeleton class="resource-item" animated v-for="item in 5" :key="item">
         <template #template>
           <el-skeleton-item class="image" variant="image" />
-          <el-skeleton-item class="name" variant="p" />
-          <div class="info">
-            <el-skeleton-item class="info-item" variant="text" />
-            <el-skeleton-item class="info-item" variant="text" />
+          <div class="skeleton-info">
+            <el-skeleton-item class="name" />
+            <el-skeleton-item class="info" />
           </div>
-          <el-skeleton-item class="tag" variant="text" />
         </template>
       </el-skeleton>
     </template>
@@ -55,54 +53,53 @@ const props = defineProps(["type"]);
   flex-wrap: wrap;
 
   .resource-item {
-    width: 300px;
-    padding: 10px;
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 15px;
     box-sizing: border-box;
-    margin-bottom: 30px;
-
-    &:nth-child(2n) {
-      margin-left: 40px;
-    }
 
     .image {
-      width: 280px;
-      height: 210px;
+      width: 68px;
+      height: 51px;
+      border-radius: 4px;
     }
 
-    .name {
-      width: 80%;
-      margin-top: 10px;
-    }
-
-    .info {
+    .skeleton-info {
+      width: 100%;
       display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
+      flex-direction: column;
+      margin-left: 10px;
 
-      .info-item {
-        width: 50px;
+      .name {
+        width: 200px;
+        height: 20px;
       }
-    }
 
-    .tag {
-      width: 100px;
-      margin-top: 12px;
+      .info {
+        width: 240px;
+        height: 18px;
+        margin-top: 13px;
+      }
     }
   }
 
   .object-item {
     .object {
-      height: 65px;
+      height: 70px;
       display: flex;
       flex-direction: column;
       justify-content: center;
 
       .name {
-        width: 50%;
+        width: 300px;
+        height: 20px;
       }
 
       .info {
-        width: 30%;
+        width: 150px;
+        height: 17px;
         margin-top: 5px;
       }
     }

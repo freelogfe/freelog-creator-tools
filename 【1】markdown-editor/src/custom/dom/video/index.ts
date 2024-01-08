@@ -81,7 +81,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              store.editorFuncs.setPolicyDrawer(true, data);
+              store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
         },
@@ -97,7 +97,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              store.editorFuncs.setPolicyDrawer(true, data);
+              store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
         },
@@ -114,7 +114,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              store.editorFuncs.setPolicyDrawer(true, data);
+              store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
         },
@@ -129,7 +129,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              store.editorFuncs.setPolicyDrawer(true, data);
+              store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
         },
@@ -144,7 +144,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
-              store.editorFuncs.setPolicyDrawer(true, data);
+              store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
         },

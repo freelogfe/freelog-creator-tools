@@ -114,7 +114,7 @@
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
 import { Resource, ResourceVersion, UploadFileData } from "@/typings/object";
-import { defineAsyncComponent, reactive, watch, computed, shallowRef } from "vue";
+import { reactive, watch, computed } from "vue";
 import { ResourceService, StorageService } from "@/api/request";
 import { useStore } from "@/store";
 import { importDoc } from "@/core/resource";
@@ -122,9 +122,6 @@ import { formatDate } from "@/utils/common";
 import { ElMessage } from "element-plus";
 import SearchInput from "@/components/search-input.vue";
 import DrawerStorageList from "@/components/drawer-storage-list.vue";
-
-// const SearchInput = defineAsyncComponent(() => import("@/components/search-input.vue"));
-// const DrawerStorageList = defineAsyncComponent(() => import("@/components/drawer-storage-list.vue"));
 
 const store = useStore();
 const props = defineProps(["show"]);
@@ -223,7 +220,7 @@ const sureImport = async (dataInfo: {
   objectId?: string;
 }) => {
   const { type, fileName, resourceId = "", version = "", objectId = "" } = dataInfo;
-  let deps = store.draftData.directDependencies;
+  let deps = [...store.draftData.directDependencies];
 
   if (type === "resource") {
     const res = await ResourceService.getResourceVersionData(resourceId, version);
@@ -319,8 +316,6 @@ const sureImport = async (dataInfo: {
   closeDrawer();
   const html = await importDoc(dataInfo);
   setTimeout(() => {
-    store.deps = [];
-    store.upcasts = [];
     store.editorFuncs.initEditor(html, true);
   }, 0);
 };

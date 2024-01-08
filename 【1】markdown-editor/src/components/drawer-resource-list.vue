@@ -11,7 +11,7 @@
     <template v-else>
       <el-scrollbar v-if="data.list.length !== 0">
         <div class="resource-list" v-infinite-scroll="getResourceList" :infinite-scroll-immediate="false">
-          <ResourceCard class="resource-item" :data="item" v-for="item in data.list" :key="item.resourceId" />
+          <ResourceItem class="list-item" :data="item" v-for="item in data.list" :key="item.resourceId" />
         </div>
       </el-scrollbar>
 
@@ -25,22 +25,17 @@ import { I18n } from "@/api/I18n";
 import { ResourceService } from "@/api/request";
 import { useStore } from "@/store";
 import { Resource } from "@/typings/object";
-import { defineAsyncComponent, nextTick, reactive, watch } from "vue";
+import { nextTick, reactive, watch } from "vue";
 import SearchInput from "@/components/search-input.vue";
 import ListSkeleton from "@/components/list-skeleton.vue";
 import NoData from "@/components/no-data.vue";
-import ResourceCard from "@/components/resource-card.vue";
-
-// const SearchInput = defineAsyncComponent(() => import("@/components/search-input.vue"));
-// const ListSkeleton = defineAsyncComponent(() => import("@/components/list-skeleton.vue"));
-// const NoData = defineAsyncComponent(() => import("@/components/no-data.vue"));
-// const ResourceCard = defineAsyncComponent(() => import("@/components/resource-card.vue"));
+import ResourceItem from "@/components/resource-item.vue";
 
 const store = useStore();
 const props = defineProps(["active", "from", "type"]);
 
 /** 列表每页数量 */
-const COUNT_PER_PAGE = 12;
+const COUNT_PER_PAGE = 20;
 /** 资源请求类型映射 */
 const REQUEST_TYPE_MAPPING: Record<string, string> = { image: "照片,插画", audio: "音频", video: "视频", text: "文章" };
 
@@ -194,19 +189,13 @@ watch(
   }
 
   .resource-list {
+    flex: 1;
     width: 100%;
-    padding: 0 30px;
+    padding: 0 30px 30px;
     box-sizing: border-box;
-    display: flex;
-    flex-wrap: wrap;
 
-    .resource-item {
-      width: 300px;
-      margin-bottom: 30px;
-
-      &:nth-child(2n) {
-        margin-left: 40px;
-      }
+    .list-item + .list-item {
+      margin-top: 10px;
     }
   }
 }

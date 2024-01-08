@@ -6,14 +6,10 @@ import Axios from "./http";
 import {
   BatchContractsParams,
   CollectionResourceListParams,
-  ContractsParams,
   CreateObjectParams,
-  ListParams,
   ObjectListParams,
-  PayContractParams,
   ResourceDataBatchParams,
   ResourceListParams,
-  createContractBatchParams,
 } from "@/typings/params";
 import { AxiosRequestConfig } from "axios";
 
@@ -22,11 +18,6 @@ export class UserService {
   /** 获取当前登录用户数据 */
   static getUserData() {
     return Axios("/v2/users/current", { method: "GET" });
-  }
-
-  /** 批量获取用户数据 */
-  static getUserDataBatch(userIds: string) {
-    return Axios("/v2/users/list", { method: "GET", params: { userIds } });
   }
 }
 
@@ -89,7 +80,7 @@ export class ResourceService {
     return Axios(`/v2/collections/resources`, { method: "GET", params });
   }
 
-  /** 获取收藏资源列表 */
+  /** 获取资源版本列表 */
   static getResourceVersions(resourceId: string, params: { projection: string; sort: string }) {
     return Axios(`/v2/resources/${resourceId}/versions`, { method: "GET", params });
   }
@@ -97,14 +88,6 @@ export class ResourceService {
   /** 获取资源版本文件 */
   static getResourceFile(resourceId: string, version: string) {
     return Axios(`/v2/resources/${resourceId}/versions/${version}/download`, { method: "GET" });
-  }
-
-  /** 检查依赖是否存在循环依赖 */
-  static checkRelyCycle(resourceId: string, dependencies: { resourceId: string; versionRange: string }[]) {
-    return Axios(`/v2/resources/${resourceId}/versions/cycleDependencyCheck`, {
-      method: "POST",
-      data: { dependencies },
-    });
   }
 }
 
@@ -180,52 +163,8 @@ export class StorageService {
 
 /** Contract 类接口 */
 export class ContractService {
-  /** 获取合约数据 */
-  static getContractData(contractId: string, params?: ContractsParams) {
-    return Axios(`/v2/contracts/${contractId}`, { method: "GET", params });
-  }
-
   /** 批量查询合约列表 */
   static getContractsBatch(params: BatchContractsParams) {
     return Axios(`/v2/contracts/list`, { method: "GET", params });
-  }
-
-  /** 获取合约流转记录 */
-  static getContractTransitionRecords(contractId: string, params: ListParams) {
-    return Axios(`/v2/contracts/${contractId}/transitionRecords`, {
-      method: "GET",
-      params: { ...params, isTranslate: 1 },
-    });
-  }
-
-  /** 批量获取合约最后一条流转记录 */
-  static getContractTransitionRecordBatch(contractIds: string[]) {
-    return Axios(`/v2/contracts/contractsTransitionRecord`, { method: "POST", data: { contractIds, isTranslate: 1 } });
-  }
-
-  /** 批量创建合约 */
-  static createContractBatch(data: createContractBatchParams) {
-    return Axios(`/v2/contracts/batchSign`, { method: "POST", data });
-  }
-
-  /** 支付合约 */
-  static payContract(contractId: string, data: PayContractParams) {
-    return Axios(`/v2/contracts/${contractId}/events/payment`, { method: "POST", data });
-  }
-}
-
-/** Account 类接口 */
-export class AccountService {
-  /** 查询用户个人账户数据 */
-  static getUserAccount(userId: number) {
-    return Axios(`/v2/accounts/individualAccounts/${userId}`, { method: "GET" });
-  }
-}
-
-/** Transaction 类接口 */
-export class TransactionService {
-  /** 查询交易记录 */
-  static getTransactionRecord(recordId: number) {
-    return Axios(`/v2/transactions/records/${recordId}`, { method: "GET" });
   }
 }

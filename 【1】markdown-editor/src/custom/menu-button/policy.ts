@@ -27,7 +27,7 @@ class PolicyBtnMenu implements IButtonMenu {
   }
   exec() {
     const store = useStore();
-    store.editorFuncs.setPolicyDrawer(true);
+    store.editorFuncs.setDependenciesDeclaratorDrawer(true);
   }
 }
 

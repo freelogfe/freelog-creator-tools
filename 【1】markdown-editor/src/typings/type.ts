@@ -3,7 +3,7 @@
  */
 
 /** 语言 */
-export type Language = "zh-cn" | "en-us";
+export type Language = "zh_CN" | "en_US";
 
 /** 授权状态码 */
 export type AuthStatus = 1 | 2 | 128;

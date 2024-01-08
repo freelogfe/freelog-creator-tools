@@ -1,7 +1,7 @@
 <!-- 存储对象 -->
 
 <template>
-  <div class="storage-object-wrapper">
+  <div class="storage-object-wrapper" @click="onSelect(data)">
     <div class="info-area" v-if="['none', 'success'].includes(data.uploadStatus)">
       <div class="object-name" :title="`${data.bucketName}/${data.objectName}`">
         {{ `${data.bucketName}/${data.objectName}` }}
@@ -27,25 +27,7 @@
       </div>
     </template>
 
-    <template v-if="['none', 'success'].includes(data.uploadStatus)">
-      <el-popconfirm
-        :title="I18n('confirmation_import_post')"
-        :confirm-button-text="I18n('btn_import_post')"
-        :cancel-button-text="I18n('btn_cancel')"
-        @confirm="onSelect(data)"
-        teleported
-        width="500"
-        v-if="props.type === 'import'"
-      >
-        <template #reference>
-          <div class="choose-btn">{{ I18n("btn_import_post") }}</div>
-        </template>
-      </el-popconfirm>
-      <div class="choose-btn" @click="onSelect(data)" v-else-if="props.type === 'insert'">
-        {{ I18n("btn_import_post") }}
-      </div>
-    </template>
-    <div class="other-btn" @click="operate" v-else>
+    <div class="other-btn" @click.stop="operate" v-if="!['none', 'success'].includes(data.uploadStatus)">
       <el-tooltip
         class="object-btn-tooltip"
         :content="STATUS_MAPPING[data.uploadStatus]?.tooltipTitle"
@@ -61,6 +43,20 @@
         <div class="update-btn">{{ STATUS_MAPPING[data.uploadStatus]?.btn }}</div>
       </el-tooltip>
     </div>
+
+    <el-popconfirm
+      :title="I18n('confirmation_import_post')"
+      :confirm-button-text="I18n('btn_import_post')"
+      :cancel-button-text="I18n('btn_cancel')"
+      @confirm="onSelect(data)"
+      teleported
+      width="500"
+      v-if="props.type === 'import'"
+    >
+      <template #reference>
+        <div class="mask" @click.stop />
+      </template>
+    </el-popconfirm>
   </div>
 </template>
 
@@ -115,12 +111,19 @@ const operate = () => {
 
 <style lang="scss" scoped>
 .storage-object-wrapper {
+  position: relative;
   width: 100%;
-  height: 65px;
+  padding: 15px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+
+  &:hover {
+    background: #edf6ff;
+  }
 
   .info-area {
     width: 0;
@@ -137,11 +140,11 @@ const operate = () => {
     }
 
     .other-info {
-      margin-top: 2px;
       font-size: 12px;
       font-weight: 400;
       color: #999999;
       line-height: 17px;
+      margin-top: 5px;
     }
   }
 
@@ -234,6 +237,15 @@ const operate = () => {
         color: #2376e5;
       }
     }
+  }
+
+  .mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
   }
 }
 

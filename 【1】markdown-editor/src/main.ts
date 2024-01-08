@@ -5,19 +5,21 @@ import App from "./App.vue";
 import { createPinia } from "pinia";
 import { useStore } from "@/store";
 import lazyPlugin from "vue3-lazy";
+import { start } from "qiankun";
 
 const myWindow: any = window;
 
 const pinia = createPinia();
 let instance: any = null;
 
+start({ sandbox: { strictStyleIsolation: true } });
+
 async function render(props: any = {}) {
   const { container } = props;
   instance = createApp(App).use(pinia).use(ElementPlus).use(lazyPlugin, {});
   const store = useStore();
-  store.initStoreData(props).then(() => {
-    instance.mount(container ? container.querySelector("#app") : "#app");
-  });
+  await store.initStoreData(props);
+  instance.mount(container ? container.querySelector("#app") : "#app");
 }
 
 if (!myWindow.__POWERED_BY_QIANKUN__) {

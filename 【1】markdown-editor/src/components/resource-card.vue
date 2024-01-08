@@ -21,6 +21,7 @@ import { insertResource } from "@/core/resource";
 import { useStore } from "@/store";
 import { arr2Str } from "@/utils/common";
 import Cover from "@/components/cover.vue";
+import { ContractService } from "@/api/request";
 
 const store = useStore();
 const props = defineProps(["data"]);
@@ -29,7 +30,29 @@ const { coverImages, resourceName, resourceTitle, resourceType, latestVersion, p
 const onlinePolicies = policies.filter((item: { status: number }) => item.status === 1);
 
 /** 插入资源 */
-const insert = () => {
+const insert = async () => {
+  const { resourceId, resourceName, latestVersion } = props.data;
+  const { directDependencies } = store.draftData;
+  const index = directDependencies.findIndex((item) => item.id === resourceId);
+  if (index === -1) {
+    // 此资源不存在依赖列表
+    const params = {
+      subjectIds: resourceId,
+      licenseeId: store.resourceId,
+      subjectType: 1,
+      licenseeIdentityType: 1,
+      isLoadPolicyInfo: 1,
+      isTranslate: 1,
+    };
+    const contractList = await ContractService.getContractsBatch(params);
+    if (contractList.length) {
+      // 有合约时，直接申明依赖
+      const dep = { id: resourceId, name: resourceName, type: "resource", versionRange: `^${latestVersion}` };
+      directDependencies.unshift(dep);
+      store.editorFuncs.saveDeps();
+    }
+  }
+
   insertResource(props.data);
   store.editorFuncs.setResourceDrawerType("");
 };

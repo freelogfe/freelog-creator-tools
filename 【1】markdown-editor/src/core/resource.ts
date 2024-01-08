@@ -34,8 +34,6 @@ export const insertResource = async (data: Resource) => {
       insertData.content = await getRealContent(res, data);
     }
   }
-  const index = store.deps.findIndex((item) => item === resourceId);
-  if (index === -1) store.updateBecauseRely = true;
   store.editor.insertNode(insertData);
 };
 
@@ -237,8 +235,8 @@ export const importDoc = async (dataInfo: {
   } else if (type === "draft") {
     const store = useStore();
     deps = [
-      ...store.deps
-        .filter((item) => !item.versionRange.startsWith("^"))
+      ...store.draftData.directDependencies
+        .filter((item) => !item.versionRange?.startsWith("^"))
         .map((item) => {
           return { resourceId: item.id, resourceName: item.name, version: item.versionRange };
         }),
@@ -529,14 +527,12 @@ const md2Html = (markdown: string) => {
    * 空有序列表项，会导致 showdown 转换 html 错误：无法正确转换为 li
    * 解决：添加一个空格进行干预，使其可以正确转换
    */
-  markdown = markdown.replace(/^\d*\.\s*\n/g, "1.  \n");
-  markdown = markdown.replace(/\n\d*\.\s*\n/g, "\n1.  \n");
+  markdown = markdown.replace(/\n*\d+\.\s*\n+/g, "\n1.  \n\n");
   /**
-   * 空有序列表项，会导致 showdown 转换 html 错误：使列表与后文显示错误
+   * 空无序列表项，会导致 showdown 转换 html 错误：使列表与后文显示错误
    * 解决：清除空有序列表项
    */
-  markdown = markdown.replace(/^-\s*\n/g, "\n");
-  markdown = markdown.replace(/\n-\s*\n/g, "\n");
+  markdown = markdown.replace(/\n*\s*-\s*\n+/g, "\n");
 
   const store = useStore();
 

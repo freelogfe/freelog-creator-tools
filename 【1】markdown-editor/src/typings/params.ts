@@ -61,13 +61,6 @@ export interface CreateObjectParams {
   resourceType?: string;
 }
 
-/** 查询合同数据参数 */
-export interface ContractsParams {
-  contractId: string;
-  isLoadPolicyInfo?: number;
-  isTranslate?: number;
-}
-
 /** 批量查询合同列表参数 */
 export interface BatchContractsParams {
   contractIds?: string;
@@ -79,20 +72,4 @@ export interface BatchContractsParams {
   isLoadPolicyInfo?: number;
   projection?: string;
   isTranslate?: number;
-}
-
-/** 批量创建合约参数 */
-export interface createContractBatchParams {
-  subjects: { subjectId: string; policyId: string }[];
-  subjectType: number;
-  licenseeId: string;
-  licenseeIdentityType: number;
-}
-
-/** 支付合约参数 */
-export interface PayContractParams {
-  accountId: string;
-  eventId: string;
-  password: string;
-  transactionAmount: number;
 }

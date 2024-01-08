@@ -28,7 +28,7 @@
             <DrawerResourceList :active="data.activeTab === 'collection'" from="collection" :type="props.type" />
           </el-tab-pane>
 
-          <el-tab-pane :label="I18n('insert_tab_storage')" name="bucket">
+          <el-tab-pane :label="I18n('insert_tab_storage')" name="bucket" v-if="props.type !== 'text'">
             <DrawerStorageList
               :active="data.activeTab === 'bucket'"
               operateType="insert"
@@ -38,7 +38,7 @@
             />
           </el-tab-pane>
 
-          <el-tab-pane :label="I18n('insert_tab_url')" name="url">
+          <el-tab-pane :label="I18n('insert_tab_url')" name="url" v-if="props.type !== 'text'">
             <div class="url-area">
               <textarea class="url-input" v-model="data.url" />
               <div class="btn-box">
@@ -56,15 +56,12 @@
 
 <script lang="ts" setup>
 import { I18n } from "@/api/I18n";
-import { defineAsyncComponent, reactive, watch, computed } from "vue";
+import { reactive, watch, computed } from "vue";
 import { useStore } from "@/store";
 import { insertUrlResource } from "@/core/resource";
 import { getDomain } from "@/utils/common";
 import DrawerResourceList from "@/components/drawer-resource-list.vue";
 import DrawerStorageList from "@/components/drawer-storage-list.vue";
-
-// const DrawerResourceList = defineAsyncComponent(() => import("@/components/drawer-resource-list.vue"));
-// const DrawerStorageList = defineAsyncComponent(() => import("@/components/drawer-storage-list.vue"));
 
 const store = useStore();
 const props = defineProps(["show", "type"]);
@@ -131,8 +128,8 @@ watch(
 
 watch(
   () => data.activeTab,
-  (cur) => {
-    if (cur !== "url") data.url = "";
+  () => {
+    if (data.url) data.url = "";
   }
 );
 </script>
