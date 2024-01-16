@@ -141,7 +141,7 @@ export const getAuthType = async (resourceId: string): Promise<1 | 2 | 3 | 4 | 5
 
   const authStatusList = contractsList.map((item: any) => item.authStatus);
   // 签约且未授权
-  if (!authStatusList.includes(1)) return 2;
+  if (!authStatusList.includes(1) && !authStatusList.includes(3)) return 2;
 
   const res = await ResourceService.getResourceAuthBatch(resourceId);
   if (res[0].isAuth) {

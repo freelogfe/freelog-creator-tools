@@ -3,7 +3,6 @@
  */
 
 import { UploadRawFile } from "element-plus";
-import { AuthStatus, FsmRunningStatus } from "./type";
 
 /** i18n */
 export interface I18N {
