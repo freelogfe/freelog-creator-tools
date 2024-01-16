@@ -239,7 +239,6 @@ const loadAuthorizationProcessor = () => {
   const { resourceId } = store;
   data.authorizationProcessor = loadMicroApp({
     name: "authorizationProcessorInMarkdownEditor",
-    // entry: 'http://localhost:8402',
     entry: process.env.VUE_APP_AUTHORIZATION_PROCESSOR,
     container: data.authorizationProcessorContainer,
     props: { licenseeId: resourceId, mainAppType: "resourceInMarkdownEditor", mainAppFuncs: { add, upcast, update } },
@@ -464,10 +463,11 @@ const countWords = (html: string) => {
 };
 
 /** 识别内容 */
-const identifyContent = () => {
+const identifyContent = async () => {
   const {
     markdown,
     dependencesInContent,
+    resourceData,
     draftData: { directDependencies, baseUpcastResources },
   } = store;
   const dependencesByIdentify = getDependencesByContent(markdown);
@@ -478,21 +478,43 @@ const identifyContent = () => {
   });
   if (deleteDeps.length) {
     const deps: any[] = [];
-    const upcasts: any[] = [];
+    const resources = await getResourceDataBatch(deleteDeps);
     directDependencies.forEach((dep) => {
       const deleted = deleteDeps.includes(dep.name);
       if (!deleted) deps.push(dep);
     });
-    baseUpcastResources.forEach((upcast) => {
-      const deleted = deleteDeps.includes(upcast.resourceName);
-      if (!deleted) upcasts.push(upcast);
-    });
     store.draftData.directDependencies = deps;
-    store.draftData.baseUpcastResources = upcasts;
+    if (resourceData.status === 0) {
+      // 未发行状态下，需要删掉对应的基础上抛
+      const upcasts: any[] = [];
+      const deleteUpcasts: string[] = [];
+      resources.forEach((item: any) => {
+        deleteUpcasts.push(item.resourceId);
+        item.baseUpcastResources.forEach((upcast: any) => {
+          if (!deleteUpcasts.includes(upcast.resourceId)) deleteUpcasts.push(upcast.resourceId);
+        });
+      });
+      baseUpcastResources.forEach((upcast) => {
+        const deleted = deleteUpcasts.includes(upcast.resourceID);
+        if (!deleted) upcasts.push(upcast);
+      });
+      store.draftData.baseUpcastResources = upcasts;
+    }
     saveDeps();
   }
 
   store.dependencesInContent = dependencesByIdentify;
+};
+
+/** 批量获取资源数据 */
+const getResourceDataBatch = async (names: string[]) => {
+  if (names.length === 0) return [];
+
+  const params: any = { resourceNames: names.join(), isLoadPolicyInfo: 1, isTranslate: 1 };
+  const res = await ResourceService.getResourceDataBatch(params);
+  if (!res) return [];
+
+  return res;
 };
 
 initFuncs();

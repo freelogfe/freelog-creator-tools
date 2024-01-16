@@ -11,7 +11,7 @@
     <template v-else>
       <el-scrollbar v-if="data.list.length !== 0">
         <div class="resource-list" v-infinite-scroll="getResourceList" :infinite-scroll-immediate="false">
-          <ResourceItem class="list-item" :data="item" v-for="item in data.list" :key="item.resourceId" />
+          <ResourceCard class="list-item" :data="item" v-for="item in data.list" :key="item.resourceId" />
         </div>
       </el-scrollbar>
 
@@ -29,7 +29,7 @@ import { nextTick, reactive, watch } from "vue";
 import SearchInput from "@/components/search-input.vue";
 import ListSkeleton from "@/components/list-skeleton.vue";
 import NoData from "@/components/no-data.vue";
-import ResourceItem from "@/components/resource-item.vue";
+import ResourceCard from "@/components/resource-card.vue";
 
 const store = useStore();
 const props = defineProps(["active", "from", "type"]);

@@ -69,11 +69,9 @@ const loadDependenciesDeclarator = async () => {
       const dep = directDependencies.find((item) => item.name === name);
       if (dep) depList[index] = dep;
 
-      const upcast = baseUpcastResources.find((item) => item.resourceName === name);
-      if (upcast) upcastList[index] = upcast;
-
       if (!dep) restDeps.push({ name, index });
     });
+    upcastList = baseUpcastResources;
 
     // 在依赖与上抛中查找不出来的依赖，查询是否已有合约存在
     if (restDeps.length) {
@@ -113,11 +111,9 @@ const loadDependenciesDeclarator = async () => {
   }
 
   depList = depList.filter((item: any) => item);
-  upcastList = upcastList.filter((item: any) => item);
 
   data.dependienciesDeclarator = loadMicroApp({
     name: "dependienciesDeclaratorInMarkdownEditor",
-    // entry: 'http://localhost:8401',
     entry: process.env.VUE_APP_DEPENDENCIES_DECLARATOR,
     container: "#dependienciesDeclaratorInMarkdownEditor",
     props: { licenseeId: store.resourceId, mainAppType: "resourceInMarkdownEditor", depList, upcastList, update },
