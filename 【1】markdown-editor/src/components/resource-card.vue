@@ -9,9 +9,12 @@
         <div class="resource-body">
           <div class="resource-name" :title="props.data.resourceName">{{ props.data.resourceName }}</div>
           <div class="resource-other">
-            {{ props.data.resourceType.join(" / ") }}｜{{
-              I18n("claim_rely_addrely_entry_lastupdated", { TimeStamp: formatDate(props.data.updateDate) })
-            }}
+            <img class="avatar" :src="`https://image.freelog.com/avatar/${props.data.userId}`" />
+            <span>{{ props.data.username }}｜</span>
+            <span>{{ props.data.resourceType.join(" / ") }}｜</span>
+            <span>
+              {{ I18n("claim_rely_addrely_entry_lastupdated", { TimeStamp: formatDate(props.data.updateDate) }) }}
+            </span>
           </div>
           <div class="policy-tags">
             <div class="tag" v-for="item in onlinePolicies" :key="item.policyId">
@@ -111,14 +114,24 @@ const insert = async () => {
         .resource-other {
           font-size: 12px;
           color: #999999;
-          line-height: 18px;
-          margin-top: 7px;
+          display: flex;
+          align-items: center;
+          margin-top: 6px;
+
+          .avatar {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 50%;
+            box-sizing: border-box;
+            margin-right: 5px;
+          }
         }
 
         .policy-tags {
           display: flex;
           flex-wrap: wrap;
-          margin-top: 2px;
+          margin-top: 1px;
 
           .tag {
             height: 26px;

@@ -4,7 +4,7 @@
   <div class="drawer-storage-list-wrapper">
     <div class="header">
       <div class="left-header">
-        <el-select class="bucket-select" v-model="data.bucket" @change="getObjects(true)">
+        <el-select class="bucket-select" v-model="data.bucket" @change="changeBucket($event)">
           <el-option :label="I18n('posteditor_insert_label_all_buckets')" value="_all" />
           <el-option v-for="item in data.bucketList" :key="item" :label="item" :value="item" />
         </el-select>
@@ -200,6 +200,12 @@ const resetData = () => {
   data.uploadQueue = [];
   data.page = -1;
   data.noMore = false;
+};
+
+/** 切换存储空间 */
+const changeBucket = (value: string) => {
+  data.uploadBucket = value === '_all' ? null : value;
+  getObjects(true);
 };
 
 /** 获取用户的存储空间 */

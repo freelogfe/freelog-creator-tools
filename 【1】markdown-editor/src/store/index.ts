@@ -10,31 +10,31 @@ export const useStore = defineStore("store", () => {
   const editor = shallowRef();
 
   const data = reactive({
-    // 资源 id
-    resourceId: "",
-    // 主应用方法
+    /** 主应用方法 */
     mainAppFuncs: null as any,
-    // 当前登录用户数据
-    userData: null as User | null,
-    // 当前语言
+    /** 当前语言 */
     language: "" as Language,
-    // i18n 配置数据
+    /** i18n 配置数据 */
     i18n: null as I18N | null,
-    // 资源草稿数据
-    draftData: {} as ResourceDraft,
-    // 资源数据
+    /** 当前登录用户数据 */
+    userData: null as User | null,
+    /** 资源 id */
+    resourceId: "",
+    /** 资源数据 */
     resourceData: null as any,
-    // markdown 内容
-    markdown: "",
-    // 内容依赖
-    dependencesInContent: [] as string[],
-    // 编辑器方法
+    /** 资源草稿数据 */
+    draftData: {} as ResourceDraft,
+    /** 编辑器方法 */
     editorFuncs: {} as any,
-    // 是否因为依赖变动需要更新内容
+    /** markdown 内容 */
+    markdown: "",
+    /** 内容依赖 */
+    dependencesInContent: [] as string[],
+    /** 是否因为依赖变动需要更新内容 */
     updateBecauseRely: false,
-    // 抽屉搜索关键词
+    /** 抽屉搜索关键词 */
     searchKey: "",
-    // 授权处理子应用
+    /** 授权处理子应用 */
     authorizationProcessor: null as any,
   });
 

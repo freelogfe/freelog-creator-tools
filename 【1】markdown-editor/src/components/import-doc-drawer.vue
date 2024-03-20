@@ -20,9 +20,9 @@
             <div class="upload-area">
               <div class="upload-frame">
                 <input
+                  id="uploadLocalFileInMarkdownEditor"
                   class="uploader"
                   type="file"
-                  id="uploadLocalFileInMarkdownEditor"
                   accept=".md,.txt"
                   @change="uploadLocalFile"
                 />
@@ -210,6 +210,45 @@ const cancelImport = () => {
   data.importFile = null;
 };
 
+/** 从存储对象导入文档 */
+const importFromObject = async (item: {
+  objectId: string;
+  objectName: string;
+  systemProperty: { fileSize: number };
+}) => {
+  const {
+    objectId,
+    objectName,
+    systemProperty: { fileSize },
+  } = item;
+
+  if (fileSize > 1024 ** 2 * 2) {
+    ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
+    return;
+  }
+
+  const res = await StorageService.getObjectFile(objectId);
+  data.importFile = { name: objectName, content: res };
+  sureImport({ content: res, type: "object", fileName: objectName, objectId });
+};
+
+/** 获取历史版本 */
+const getHistoryVersion = async () => {
+  const res = await ResourceService.getResourceVersions(store.resourceId, {
+    projection: "versionId,version,updateDate,filename",
+    sort: "updateDate:-1",
+  });
+  data.historyList = res;
+};
+
+/** 从版本导入文档 */
+const importFromHistory = async (item: { version: string; filename: string }) => {
+  const { version, filename } = item;
+  const res = await ResourceService.getResourceFile(store.resourceId, version);
+  data.importFile = { name: filename, content: res };
+  sureImport({ content: res, type: "resource", fileName: filename, resourceId: store.resourceId, version });
+};
+
 /** 确认导入 */
 const sureImport = async (dataInfo: {
   content: string;
@@ -318,45 +357,6 @@ const sureImport = async (dataInfo: {
   setTimeout(() => {
     store.editorFuncs.initEditor(html, true);
   }, 0);
-};
-
-/** 从存储对象导入文档 */
-const importFromObject = async (item: {
-  objectId: string;
-  objectName: string;
-  systemProperty: { fileSize: number };
-}) => {
-  const {
-    objectId,
-    objectName,
-    systemProperty: { fileSize },
-  } = item;
-
-  if (fileSize > 1024 ** 2 * 2) {
-    ElMessage.warning(I18n("mdeditor_import_error_lengthlimitation"));
-    return;
-  }
-
-  const res = await StorageService.getObjectFile(objectId);
-  data.importFile = { name: objectName, content: res };
-  sureImport({ content: res, type: "object", fileName: objectName, objectId });
-};
-
-/** 获取历史版本 */
-const getHistoryVersion = async () => {
-  const res = await ResourceService.getResourceVersions(store.resourceId, {
-    projection: "versionId,version,updateDate,filename",
-    sort: "updateDate:-1",
-  });
-  data.historyList = res;
-};
-
-/** 从版本导入文档 */
-const importFromHistory = async (item: { version: string; filename: string }) => {
-  const { version, filename } = item;
-  const res = await ResourceService.getResourceFile(store.resourceId, version);
-  data.importFile = { name: filename, content: res };
-  sureImport({ content: res, type: "resource", fileName: filename, resourceId: store.resourceId, version });
 };
 
 watch(
@@ -723,11 +723,16 @@ watch(
           border-bottom: 1px solid #e5e7eb;
 
           .info-area {
+            width: 370px;
+
             .version {
               font-size: 14px;
               font-weight: 600;
               color: #222222;
               line-height: 20px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
             }
 
             .other-info {
