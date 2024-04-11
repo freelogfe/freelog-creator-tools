@@ -20,7 +20,7 @@
       </div>
       <div class="btns">
         <div class="save-btn" :class="{ disabled: !data.edited }" @click="save">{{ I18n("btn_save_post") }}</div>
-        <div class="exit-btn" @click.stop="exit">{{ I18n("btn_quit_editor") }}</div>
+        <div class="exit-btn" @click.stop="clickExitBtn">{{ I18n("btn_quit_editor") }}</div>
       </div>
     </div>
 
@@ -66,6 +66,20 @@
       :show="data.denpendenciesDeclaratorDrawerShow"
       @close="data.denpendenciesDeclaratorDrawerShow = false"
     />
+
+    <!-- 弹窗底层遮罩 -->
+    <div class="modal" @click.stop v-if="data.exitPopupShow" />
+
+    <!-- 退出确认弹窗 -->
+    <transition name="fade-in-down">
+      <div class="exit-confirm-popup" v-if="data.exitPopupShow">
+        <div class="content">{{ I18n("alarm_leave_page") }}</div>
+        <div class="btns-box">
+          <div class="btn sure-btn" @click="exit()">{{ I18n("btn_leave") }}</div>
+          <div class="btn cancle-btn" @click="data.exitPopupShow = false">{{ I18n("btn_cancel") }}</div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -120,6 +134,7 @@ const data = reactive({
   resourceDrawerShow: false,
   importDrawerShow: false,
   denpendenciesDeclaratorDrawerShow: false,
+  exitPopupShow: false,
   inputTimer: null as any,
   stopTimer: null as any,
   authorizationProcessorContainer: null as any,
@@ -239,6 +254,7 @@ const loadAuthorizationProcessor = () => {
   const { resourceId } = store;
   data.authorizationProcessor = loadMicroApp({
     name: "authorizationProcessorInMarkdownEditor",
+    // entry: 'http://localhost:8402',
     entry: process.env.VUE_APP_AUTHORIZATION_PROCESSOR,
     container: data.authorizationProcessorContainer,
     props: { licenseeId: resourceId, mainAppType: "resourceInMarkdownEditor", mainAppFuncs: { add, upcast, update } },
@@ -437,8 +453,17 @@ const saveDeps = async () => {
   ResourceService.saveResourceDraftData(resourceId, draftData);
 };
 
-/** 关闭编辑器 */
-const exit = () => {
+/** 点击退出按钮 */
+const clickExitBtn = async () => {
+  if (data.edited) {
+    data.exitPopupShow = true;
+  } else {
+    exit();
+  }
+};
+
+/** 退出 */
+const exit = async () => {
   if (!store.mainAppFuncs) return;
 
   clearTimeout(data.stopTimer);
@@ -959,6 +984,85 @@ watch(
       .w-e-select-list {
         ul {
           padding: 0;
+        }
+      }
+    }
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .exit-confirm-popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    margin-left: -230px;
+    width: 460px;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 30px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0px 2px 10px 0px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+
+    .content {
+      width: 100%;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .btns-box {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+
+      .btn {
+        padding: 6px 15px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+
+        & + .btn {
+          margin-left: 10px;
+        }
+      }
+
+      .sure-btn {
+        color: #fff;
+        background: #2784ff;
+
+        &:hover {
+          background: #529dff;
+        }
+
+        &:active {
+          background: #2376e5;
+        }
+      }
+
+      .cancle-btn {
+        color: #666666;
+        background: #ededed;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+
+        &:active {
+          background: #e6e6e6;
         }
       }
     }

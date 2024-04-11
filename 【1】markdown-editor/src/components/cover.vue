@@ -1,25 +1,35 @@
 <!-- 资源卡片封面 -->
 
 <template>
-  <el-tooltip effect="light" :content="I18n('check_release_details')" placement="bottom-start">
-    <div class="cover-wrapper" :style="{ '--width': coverWidth + 'px' }" @click.stop>
-      <img
-        v-lazy="data.src"
-        :style="{
-          width: data.coverStyle.width,
-          height: data.coverStyle.height,
-          transform: `translateX(${data.coverStyle.translateX}) translateY(${data.coverStyle.translateY})`,
-        }"
-        v-if="data.coverStyle"
-      />
-      <img class="default-cover" v-lazy="data.src" v-else-if="data.src" />
-      <img class="default-cover" :src="DEFAULT_COVER" v-else />
+  <div class="cover-wrapper" :style="{ '--width': coverWidth + 'px' }" @click.stop>
+    <img
+      v-lazy="data.src"
+      :style="{
+        width: data.coverStyle.width,
+        height: data.coverStyle.height,
+        transform: `translateX(${data.coverStyle.translateX}) translateY(${data.coverStyle.translateY})`,
+      }"
+      v-if="data.coverStyle"
+    />
+    <img class="default-cover" v-lazy="data.src" v-else-if="data.src" />
+    <img class="default-cover" :src="DEFAULT_COVER" v-else />
 
+    <el-tooltip effect="light" :content="I18n('check_release_details')" placement="bottom" :show-arrow="false">
       <div class="modal" @click.stop="toDetail(props.resourceData.resourceId)">
         <i class="freelog fl-icon-chakanziyuan detail-icon" />
       </div>
-    </div>
-  </el-tooltip>
+    </el-tooltip>
+
+    <el-tooltip
+      effect="light"
+      :content="I18n('resouce_list_icon_editorpicks_tooltips')"
+      placement="bottom-start"
+      :show-arrow="false"
+      v-if="props.resourceData.operationType === 5"
+    >
+      <img class="choiceness-mark" src="@/assets/images/choiceness.png" />
+    </el-tooltip>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -112,6 +122,14 @@ initCover();
       font-size: 15px;
       color: #fff;
     }
+  }
+
+  .choiceness-mark {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
   }
 }
 </style>

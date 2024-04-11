@@ -114,6 +114,7 @@ const loadDependenciesDeclarator = async () => {
 
   data.dependienciesDeclarator = loadMicroApp({
     name: "dependienciesDeclaratorInMarkdownEditor",
+    // entry: 'http://localhost:8401',
     entry: process.env.VUE_APP_DEPENDENCIES_DECLARATOR,
     container: "#dependienciesDeclaratorInMarkdownEditor",
     props: { licenseeId: store.resourceId, mainAppType: "resourceInMarkdownEditor", depList, upcastList, update },
