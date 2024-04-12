@@ -38,7 +38,7 @@ export const getRequestDomain = () => {
 };
 
 /** 格式化大小 */
-export function formatSize(bytes: number): string {
+export const formatSize = (bytes: number): string => {
   if (bytes <= 0) return "0 B";
 
   const unitArr = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -46,20 +46,32 @@ export function formatSize(bytes: number): string {
   const size = Math.round((bytes / Math.pow(1024, index)) * 100) / 100;
 
   return size + " " + unitArr[index];
-}
+};
 
 /** 根据 File 获取 Sha1 */
-export function getFileSha1(file: File): Promise<string> {
+export const getFileSha1 = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader: FileReader = new FileReader();
-    reader.onload = () => {
-      const wordArray = CryptoJS.lib.WordArray.create(reader.result as any);
-      const sha1 = CryptoJS.SHA1(wordArray).toString();
-      resolve(sha1);
-    };
     reader.readAsArrayBuffer(file);
+    reader.onload = async () => {
+      if (!reader.result) {
+        resolve("");
+        return "";
+      }
+      if (typeof reader.result === "string") {
+        resolve("");
+        return "";
+      }
+      const sha1: string = await self.crypto.subtle.digest("SHA-1", <any>reader.result).then((a) =>
+        Array.from(new Uint8Array(a))
+          .map((a) => a.toString(16).padStart(2, "0"))
+          .join("")
+      );
+      resolve(sha1);
+      return "";
+    };
   });
-}
+};
 
 /** 换算大小 */
 export const conversionSize = (size: number) => {

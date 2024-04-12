@@ -191,16 +191,20 @@ const importFromUpload = async () => {
   if (!data.importFile) return;
 
   store.loaderShow = true;
+  close();
   sureImport(data.importFile.files[0], 2);
   // 清除上传缓存
   data.importFile.value = "";
   data.importFile = null;
-  data.uploadStatus = 1;
+  setTimeout(() => {
+    data.uploadStatus = 1;
+  }, 1000);
 };
 
 /** 从存储对象导入 */
 const importFromObject = async (item: { objectId: string; objectName: string }) => {
   store.loaderShow = true;
+  close();
   const { objectId, objectName } = item;
   const res = await StorageService.getObjectFile(objectId, { responseType: "blob" });
   const file = new File([res], objectName);
@@ -220,6 +224,7 @@ const getHistoryVersion = async () => {
 /** 从版本导入 */
 const importFromHistory = async (item: { version: string; filename: string }) => {
   store.loaderShow = true;
+  close();
   const { version, filename } = item;
   const res = await ResourceService.getResourceFile(store.resourceId, version, { responseType: "blob" });
   const file = new File([res], filename + ".zip", { type: "application/zip" });
@@ -241,8 +246,6 @@ const sureImport = async (file: File, importType: 2 | 3 | 4) => {
   store.imgList = [];
   // store.comicName = file.name;
   store.autoScroll = true;
-
-  close();
 
   uncompressComicArchive(file, importType);
 };

@@ -94,7 +94,7 @@ var unrarMemoryFileLocation = null;
       // Load the archive format
       switch (archive_format) {
         case "rar":
-          unrarMemoryFileLocation = path + "libunrar.js.mem";
+          window.unrarMemoryFileLocation = path + "libunrar.js.mem";
           loadScript(path + "libunrar.js");
           _loaded_archive_formats.push(archive_format);
           break;
@@ -241,7 +241,7 @@ var unrarMemoryFileLocation = null;
 
   function _rarGetEntries(rar_handle) {
     // Get the entries
-    var info = readRARFileNames(rar_handle.rar_files, rar_handle.password);
+    var info = readRARFiles(rar_handle.rar_files, rar_handle.password);
     var entries = [];
     Object.keys(info).forEach(function (i) {
       var name = info[i].name;

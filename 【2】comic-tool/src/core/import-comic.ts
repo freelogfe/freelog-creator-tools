@@ -28,7 +28,7 @@ const { uncompress } = myWindow;
 if (!UncompressTool && uncompress) {
   // 初始化解压工具
   UncompressTool = uncompress;
-  UncompressTool.loadArchiveFormats(["rar", "zip", "tar"]);
+  UncompressTool.loadArchiveFormats(["zip", "tar", "rar"]);
   delete myWindow.uncompress;
 }
 

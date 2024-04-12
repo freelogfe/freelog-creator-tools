@@ -34,7 +34,7 @@
         <div class="save-btn" :class="{ disabled: saveDisabled }" @click="save(false)">
           {{ I18n("btn_save_post") }}
         </div>
-        <div class="exit-btn" @click="exit()">{{ I18n("cbformatter_cancel_btn") }}</div>
+        <div class="exit-btn" @click="clickExitBtn()">{{ I18n("cbformatter_cancel_btn") }}</div>
       </div>
     </div>
 
@@ -113,8 +113,14 @@
     <transition name="fade-in">
       <div
         class="modal"
-        :class="{ transparent: store.loaderShow }"
-        v-if="store.loaderShow || data.cuttingLoaderShow || data.saveLoaderShow || store.deleteConfirmShow"
+        :class="{ transparent: store.loaderShow || data.exitPopupShow }"
+        v-if="
+          store.loaderShow ||
+          data.cuttingLoaderShow ||
+          data.saveLoaderShow ||
+          store.deleteConfirmShow ||
+          data.exitPopupShow
+        "
       />
     </transition>
 
@@ -195,6 +201,17 @@
       </div>
     </transition>
 
+    <!-- 退出确认弹窗 -->
+    <transition name="fade-in-down">
+      <div class="exit-confirm-popup" v-if="data.exitPopupShow">
+        <div class="content">{{ I18n("alarm_leave_page") }}</div>
+        <div class="btns-box">
+          <div class="btn sure-btn" @click="exit()">{{ I18n("btn_leave") }}</div>
+          <div class="btn cancle-btn" @click="data.exitPopupShow = false">{{ I18n("btn_cancel") }}</div>
+        </div>
+      </div>
+    </transition>
+
     <!-- 保存失败提示 -->
     <transition name="fade-in">
       <div class="save-fail-tip" v-if="data.saveFailTipShow">
@@ -215,7 +232,7 @@
 import { I18n } from "@/api/I18n";
 import { ResourceService, StorageService } from "@/api/request";
 import { useStore } from "@/store";
-import { ImgInComicTool, ImgInOutput, Resource, ResourceDraft } from "@/typings/object";
+import { ImgInComicTool, ImgInOutput } from "@/typings/object";
 import {
   MAX_IMG_LENGTH,
   MAX_IMG_SIZE,
@@ -228,7 +245,6 @@ import {
 import {
   base64ToFile,
   formatDate,
-  getExt,
   getFileResult,
   getImage,
   getSizeByBase64,
@@ -261,6 +277,7 @@ const data = reactive({
   cuttingLoaderShow: false,
   saveLoaderShow: false,
   saveFailTipShow: false,
+  exitPopupShow: false,
   stopTimer: null as any,
   sorter: null as any,
   saveProgressList: [] as number[],
@@ -334,6 +351,15 @@ const getData = async () => {
   store.autoScroll = true;
   const file = new File([res], name);
   uncompressComicArchive(file, 1);
+};
+
+/** 点击退出按钮 */
+const clickExitBtn = async () => {
+  if (store.edited) {
+    data.exitPopupShow = true;
+  } else {
+    exit();
+  }
 };
 
 /** 退出 */
@@ -1082,15 +1108,15 @@ watch(
   (cur) => {
     if (store.edited !== null) {
       store.edited = true;
-      // if (data.stopTimer) {
-      //   clearTimeout(data.stopTimer);
-      //   data.stopTimer = null;
-      // }
-      // data.stopTimer = setTimeout(() => {
-      //   // 15 秒自动保存
-      //   save(true);
-      //   data.stopTimer = null;
-      // }, 15000);
+      if (data.stopTimer) {
+        clearTimeout(data.stopTimer);
+        data.stopTimer = null;
+      }
+      data.stopTimer = setTimeout(() => {
+        // 15 秒自动保存
+        save(true);
+        data.stopTimer = null;
+      }, 15000);
     }
 
     if (cur.length === 0) {
@@ -1545,6 +1571,7 @@ watch(
     height: 100%;
     background: rgba(0, 0, 0, 0.4);
     animation: fade-in 0.2s ease-in-out;
+    z-index: 1;
 
     &.transparent {
       background: transparent;
@@ -1631,7 +1658,7 @@ watch(
       display: flex;
       flex-direction: column;
       align-items: center;
-      z-index: 1;
+      z-index: 2;
 
       .title {
         font-size: 24px;
@@ -1676,7 +1703,7 @@ watch(
       display: flex;
       flex-direction: column;
       align-items: center;
-      z-index: 1;
+      z-index: 2;
 
       .confirm-header {
         position: relative;
@@ -1761,6 +1788,74 @@ watch(
           &:active {
             background: #eb3737;
           }
+        }
+      }
+    }
+  }
+
+  .exit-confirm-popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    margin-left: -230px;
+    width: 460px;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 30px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0px 2px 10px 0px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+
+    .content {
+      width: 100%;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .btns-box {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+
+      .btn {
+        padding: 6px 15px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+
+        & + .btn {
+          margin-left: 10px;
+        }
+      }
+
+      .sure-btn {
+        color: #fff;
+        background: #2784ff;
+
+        &:hover {
+          background: #529dff;
+        }
+
+        &:active {
+          background: #2376e5;
+        }
+      }
+
+      .cancle-btn {
+        color: #666666;
+        background: #ededed;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+
+        &:active {
+          background: #e6e6e6;
         }
       }
     }
