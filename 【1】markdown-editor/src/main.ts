@@ -12,7 +12,7 @@ const myWindow: any = window;
 const pinia = createPinia();
 let instance: any = null;
 
-start({ sandbox: { strictStyleIsolation: true } });
+start({ sandbox: { strictStyleIsolation: false } });
 
 async function render(props: any = {}) {
   const { container } = props;
