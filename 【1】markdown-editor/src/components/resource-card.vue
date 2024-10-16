@@ -7,7 +7,8 @@
         <Cover :resourceData="props.data" :width="104" />
 
         <div class="resource-body">
-          <div class="resource-name" :title="props.data.resourceName">{{ props.data.resourceName }}</div>
+          <div class="resource-name" :title="props.data.resourceTitle ? props.data.resourceTitle : props.data.resourceName">
+            {{ props.data.resourceTitle ? props.data.resourceTitle : props.data.resourceName }}</div>
           <div class="resource-other">
             <img class="avatar" :src="`https://image.freelog.com/avatar/${props.data.userId}`" />
             <span>{{ props.data.username }}｜</span>
