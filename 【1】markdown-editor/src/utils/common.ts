@@ -48,7 +48,7 @@ export const hashImgUrl = (str: string) => {
 
 /** 获取请求域名 */
 export const getRequestDomain = () => {
-  const env = process.env.NODE_ENV;
+  const env = process.env.VUE_APP_ENV;
   const domain = env === "development" ? "/api" : process.env.VUE_APP_BASE_API;
 
   return domain;
