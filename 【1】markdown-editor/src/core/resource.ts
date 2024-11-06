@@ -8,12 +8,13 @@ import { getDomain } from "@/utils/common";
 /** 插入资源 */
 export const insertResource = async (data: Resource) => {
   const store = useStore();
-  const { resourceId, resourceName, coverImages, resourceType, latestVersion, version } = data;
+  const { resourceId, resourceName, resourceTitle, coverImages, resourceType, latestVersion, version } = data;
   const authType: 1 | 2 | 3 | 4 | 5 | 6 = await getAuthType(resourceId);
   const insertData: CustomResourceData = {
     originType: 1,
     resourceId,
     resourceName,
+    resourceTitle,
     coverImages,
     resourceType,
     latestVersion,
@@ -282,7 +283,7 @@ export const importDoc = async (dataInfo: {
     // 将文档文本替换标记
     html = html.replace(/`#docContent#`/i, domHtml);
   }
-
+  
   return html;
 };
 
@@ -393,7 +394,7 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
     // 请求依赖资源数据
     const resourceRes = await ResourceService.getResourceData(resourceName);
     if (resourceRes) {
-      const { resourceId, resourceName, coverImages, resourceType, latestVersion } = resourceRes;
+      const { resourceId, resourceName, resourceTitle, coverImages, resourceType, latestVersion } = resourceRes;
       if (resourceType[0] !== type) {
         // 类型错误依赖
         data = {
@@ -409,6 +410,7 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
       data.originType = 1;
       data.resourceId = resourceId;
       data.resourceName = resourceName;
+      data.resourceTitle = resourceTitle;
       data.coverImages = coverImages;
       data.resourceType = resourceType;
       data.latestVersion = latestVersion;
@@ -498,6 +500,7 @@ const customResourceHtml = (data: CustomResourceData) => {
    * 编辑器解析属性时，使用的 getAttribute 方法查询到双引号 " 截止，会导致字符串中的双引号错误地截断属性的 value
    * 所以从 md 转为 html 时，属性值内的双引号需转为 ASCII 编码（&#34;）
    */
+  debugger
   const html = `
   <span
     data-w-e-type="resource"
@@ -507,6 +510,7 @@ const customResourceHtml = (data: CustomResourceData) => {
     data-resourceId="${data.resourceId || ""}"
     data-authType="${data.authType || ""}"
     data-resourceName="${data.resourceName || ""}"
+    data-resourceTitle="${data.resourceTitle || ""}"
     data-coverImages="${data.coverImages ? JSON.stringify(data.coverImages).replace(/"/g, "&#34;") : ""}"
     data-resourceType="${JSON.stringify(data.resourceType).replace(/"/g, "&#34;")}"
     data-latestVersion="${data.latestVersion || ""}"

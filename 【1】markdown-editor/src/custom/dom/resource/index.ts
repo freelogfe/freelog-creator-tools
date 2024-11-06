@@ -34,6 +34,7 @@ const resourceToHtml = (data: CustomResourceData): string => {
   data-resourceId="${data.resourceId}"
   data-authType="${data.authType}"
   data-resourceName="${data.resourceName}"
+  data-resourceTitle="${data.resourceTitle}"
   data-coverImages="${JSON.stringify(data.coverImages)}"
   data-resourceType="${JSON.stringify(data.resourceType)}"
   data-latestVersion="${data.latestVersion}"
@@ -52,6 +53,7 @@ const htmlToResource = (domElem: Element): SlateElement => {
   const resourceId = domElem.getAttribute("data-resourceId") || "";
   const authType = domElem.getAttribute("data-authType") || "";
   const resourceName = domElem.getAttribute("data-resourceName") || "";
+  const resourceTitle = domElem.getAttribute("data-resourceTitle") || "";
   const coverImages = domElem.getAttribute("data-coverImages") || "[]";
   const resourceType = domElem.getAttribute("data-resourceType") || "[]";
   const latestVersion = domElem.getAttribute("data-latestVersion") || "";
@@ -63,6 +65,7 @@ const htmlToResource = (domElem: Element): SlateElement => {
     resourceId,
     authType: Number(authType),
     resourceName,
+    resourceTitle,
     coverImages: JSON.parse(coverImages),
     resourceType: JSON.parse(resourceType),
     latestVersion,

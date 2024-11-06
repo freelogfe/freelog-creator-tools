@@ -156,6 +156,7 @@ export interface CustomResourceData {
   originType: 1 | 2 | 3; // 来源类型 1-资源 2-对象/url（这两种都输出 url） 3-无效依赖（不存在依赖或类型错误依赖）
   resourceId?: string;
   resourceName?: string;
+  resourceTitle?: string;
   coverImages?: string[];
   resourceType: string[];
   latestVersion?: string;

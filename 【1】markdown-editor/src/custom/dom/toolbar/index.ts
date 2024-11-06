@@ -9,7 +9,8 @@ import { useStore } from "@/store";
 
 /** 资源工具栏 */
 export const ResourceToolbar = (data: CustomResourceData, editor: any): VNode => {
-  const { originType, resourceName, resourceId, content } = data;
+  const { originType, resourceName, resourceTitle, resourceId, content } = data;
+  
   if (originType === 1) {
     return h("div.resource-toolbar", {}, [
       h("div.toolbar", {}, [
@@ -17,14 +18,14 @@ export const ResourceToolbar = (data: CustomResourceData, editor: any): VNode =>
         h(
           "div.name",
           {
-            title: resourceName,
+            title: resourceTitle ? resourceTitle : resourceName,
             on: {
               click() {
                 resourceId && toDetail(resourceId);
               },
             },
           },
-          [resourceName]
+          [resourceTitle ? resourceTitle : resourceName]
         ),
         AuthStatus(data, editor),
       ]),
