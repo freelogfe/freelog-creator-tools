@@ -54,6 +54,8 @@ export const useStore = defineStore("store", () => {
     importDrawerShow: false,
     /** 抽屉搜索关键词 */
     searchKey: "",
+    /** 当前的模式: (默认)normal => 可创任务; preview => 仅预览 */
+    appMode: "normal" 
   });
 
   const methods = {
@@ -67,9 +69,17 @@ export const useStore = defineStore("store", () => {
 
       if (POWERED_BY_QIANKUN) {
         // 作为子应用运行
-        const { resourceID, onChange_Saved, onClose } = props;
+        const { resourceID, onChange_Saved, onClose, appMode, onGlobalStateChange } = props;
         data.resourceId = resourceID;
         data.mainAppFuncs = { save: onChange_Saved, close: onClose };
+        if (appMode) {
+          data.appMode = appMode
+        }
+
+        onGlobalStateChange((state: any, pre: any) => {
+          const { appMode } = state
+          data.appMode = appMode
+        })
       } else {
         // 独立运行
         Cookie.set("uid", 50060);

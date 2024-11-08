@@ -18,7 +18,7 @@
       @change="selectLocalImg($event, 'cut')"
     />
 
-    <div class="header">
+    <div class="header" v-show="store.appMode === 'normal'">
       <div class="title">{{ I18n("cbformatter_title") }}</div>
 
       <div class="header-right">
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div class="body">
+    <div class="body" v-show="store.appMode === 'normal'">
       <div class="body-box">
         <div class="btns-bar">
           <div class="bar-left">
@@ -323,7 +323,7 @@ onBeforeUnmount(() => {
 const getData = async () => {
   store.loaderShow = true;
 
-  const { resourceId } = store;
+  const { resourceId, appMode } = store;
   const [resourceData, resourceDraft] = await Promise.all([
     ResourceService.getResourceData(resourceId),
     ResourceService.getResourceDraftData(resourceId),
@@ -1132,6 +1132,12 @@ watch(
             top: data.sortableList.scrollHeight,
           });
         }
+
+        if (store.appMode === 'preview' && store.imgList[0]?.base64) {
+          console.log("store.imgList", store.imgList);
+          store.previewShow = true
+        }
+
       });
     }
   },

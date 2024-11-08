@@ -21,6 +21,7 @@ async function render(props: any = {}) {
     const store = useStore();
   await store.initStoreData(props);
   instance.mount(container ? container.querySelector("#app") : "#app");
+
 }
 
 if (!myWindow.__POWERED_BY_QIANKUN__) {
