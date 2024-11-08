@@ -244,6 +244,8 @@ const getImages = async (entries: Entry[]) => {
       }
     }
   }
+  console.log("imgList", imgList);
+  
 };
 
 /** 读取图片 blob */

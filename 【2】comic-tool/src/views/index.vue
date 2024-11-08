@@ -312,12 +312,49 @@ onBeforeMount(() => {
   window.addEventListener("beforeunload", (e) => {
     if (store.edited) e.returnValue = "";
   });
-  getData();
+  if (store.appMode === "normal") {
+    getData();
+  } else {
+    getResourceOnly()
+  }
 });
 
 onBeforeUnmount(() => {
   restoreToolState();
 });
+
+/** 只获取资源相关数据 */
+const getResourceOnly = async () => {
+  store.loaderShow = true;
+
+  const { resourceId, appMode, version } = store;
+  
+  const [resourceData, resourceVersionsInfo, resourceBlob] = await Promise.all([
+    ResourceService.getResourceData(resourceId),
+    ResourceService.getResourceVersions(resourceId),
+    ResourceService.getResourceFile(resourceId, version, { responseType: "blob" })
+  ]);
+  console.log(resourceData, resourceVersionsInfo, resourceBlob);
+  
+  if (!resourceData || !resourceBlob) return;
+
+  store.resourceData = resourceData;
+  store.draftData = {}
+
+  const { resourceType } = resourceData;
+
+  store.comicMode = comicModeMappings[resourceType[2]] || 1;
+
+  store.edited = false;
+
+  store.loaderShow = false;
+  
+  const fileName = resourceVersionsInfo.find(ele => ele.version === version)?.filename;
+  const file = new File([resourceBlob], fileName + ".zip", { type: "application/zip" });
+
+  store.autoScroll = true;
+  uncompressComicArchive(file, 1);
+}
 
 /** 获取资源与草稿数据 */
 const getData = async () => {
@@ -348,6 +385,7 @@ const getData = async () => {
   const { name, sha1 } = selectedFileInfo;
   // data.comicName = name;
   const res = await StorageService.getStorageFile(sha1, { responseType: "blob" });
+  
   store.autoScroll = true;
   const file = new File([res], name);
   uncompressComicArchive(file, 1);
@@ -710,6 +748,11 @@ const cutImages = async (files: FileList) => {
 
 /** 保存 */
 const save = async (auto: boolean) => {
+  // 预览模式下不可保存
+  if (store.appMode === 'preview') {
+    return
+  }
+
   // 是否保存失败
   let saveFail = false;
 
