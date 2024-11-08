@@ -213,7 +213,7 @@
             <i class="freelog fl-icon-shujia1" />
             {{ I18n("cbformatter_preview_changemode") }}
           </div>
-          <div class="exit-btn" @click="store.previewShow = false">{{ I18n("cbformatter_preview_quit") }}</div>
+          <div class="exit-btn" @click="existPreview">{{ I18n("cbformatter_preview_quit") }}</div>
         </div>
 
         <div class="mode-menu" v-if="data.modeMenuShow">
@@ -307,6 +307,15 @@ const data = reactive({
   tipTimer: null as any,
   pagePointList: [] as number[],
 });
+
+/** 退出预览 */
+const existPreview = () => {
+  store.previewShow = false
+  if (store.appMode === 'preview') {
+    store.mainAppFuncs.close()
+  }
+}
+
 
 /** 切换阅读模式 */
 const changeMode = (value: modeType, index: number) => {
