@@ -364,8 +364,17 @@ const getFileContent = async () => {
     return;
   }
 
-  const content = fileData.data;
+  let content = fileData.data;
+
+  /* txt中不符合的md语法处理 */
+  // if (["text/plain"].includes(fileData.headers["content-type"])) {
+  //   content = content.replaceAll("_", "\\_")
+  //   content = content.replaceAll("<", "&lt;")
+  //   content = content.replaceAll(">", "&gt;")
+  // }
+
   const html = await importDoc({ content, type: "draft" });
+
   initEditor(html);
 };
 
@@ -374,23 +383,31 @@ const initEditor = async (html = "", saveNow = false) => {
   store.editor?.destroy();
   data.loading = true;
   setTimeout(() => {
-    store.editor = createEditor({
-      selector: "#markdownEditorWrapper",
-      html,
-      config: {
-        onChange(editor) {
-          data.html = editor.getHtml();
+    try {      
+      store.editor = createEditor({
+        selector: "#markdownEditorWrapper",
+        html,
+        config: {
+          onChange(editor) {
+            data.html = editor.getHtml();
+          },
+          onCreated() {
+            setTimeout(() => {
+              if (saveNow) save();
+            }, 0);
+          },
+          onDestroyed: () => destroyEditor(),
+          ...editorConfig,
         },
-        onCreated() {
-          setTimeout(() => {
-            if (saveNow) save();
-          }, 0);
-        },
-        onDestroyed: () => destroyEditor(),
-        ...editorConfig,
-      },
-    });
-    data.loading = false;
+      });
+      data.loading = false;
+    } catch (error) {
+      ElMessage({
+        message: I18n("mdeditor_import_error_format"),
+        type: "warning",
+        duration: 3000,
+      });
+    }
 
     setTimeout(() => {
       data.disabled = false;
