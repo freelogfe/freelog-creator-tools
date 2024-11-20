@@ -235,13 +235,17 @@ export const importDoc = async (dataInfo: {
     deps = basicDeps;
   } else if (type === "draft") {
     const store = useStore();
-    deps = [
-      ...store.draftData.directDependencies
-        .filter((item) => !item.versionRange?.startsWith("^"))
-        .map((item) => {
-          return { resourceId: item.id, resourceName: item.name, version: item.versionRange };
-        }),
-    ];
+    if (store.draftData.directDependencies) {
+      deps = [
+        ...store.draftData.directDependencies
+          .filter((item) => !item.versionRange?.startsWith("^"))
+          .map((item) => {
+            return { resourceId: item.id, resourceName: item.name, version: item.versionRange };
+          }),
+      ];
+    } else {
+      deps = []
+    }
   }
 
   /** 循环处理 md 语法图片标记 */

@@ -97,7 +97,7 @@ import "@wangeditor/editor/dist/css/style.css";
 import { Toolbar } from "@wangeditor/editor-for-vue";
 import { createEditor, i18nChangeLanguage } from "@wangeditor/editor";
 import { ResourceService, StorageService } from "@/api/request";
-import { CustomResourceData } from "@/typings/object";
+import { CustomResourceData, ResourceDraft } from "@/typings/object";
 import { getDependencesByContent, importDoc } from "@/core/resource";
 import showdown from "showdown";
 import { html2md } from "@/core/html2md";
@@ -348,7 +348,7 @@ const getResourceOnly = async () => {
   if (!resourceData || !resourceBlob) return;
 
   store.resourceData = resourceData;
-  store.draftData = {}
+  store.draftData = {} as ResourceDraft;
   
   const html = await importDoc({ content: resourceBlob, type: "resource", resourceId, version });
 
@@ -413,7 +413,14 @@ const initEditor = async (html = "", saveNow = false) => {
   store.editor?.destroy();
   data.loading = true;
   setTimeout(() => {
-    try {      
+    try {
+      let readOnly
+      if (store.appMode === 'preview') {
+        readOnly = true
+      } else {
+        readOnly = false
+      }
+      
       store.editor = createEditor({
         selector: "#markdownEditorWrapper",
         html,
@@ -428,7 +435,7 @@ const initEditor = async (html = "", saveNow = false) => {
           },
           onDestroyed: () => destroyEditor(),
           ...editorConfig,
-          readOnly: true
+          readOnly
         },
       });
       data.loading = false;
@@ -673,7 +680,8 @@ watch(
     box-sizing: border-box;
     display: flex;
     align-items: center;
-
+    flex-shrink: 0;
+    
     .title {
       width: 168px;
       font-size: 16px;
