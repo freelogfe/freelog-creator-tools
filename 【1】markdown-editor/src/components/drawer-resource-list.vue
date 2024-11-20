@@ -89,7 +89,7 @@ const getFromMarket = async () => {
   if (!res) return;
 
   const { dataList, totalItem } = res;
-  data.list = [...data.list, ...dataList];
+  data.list = [...data.list, ...dataList].filter(ele => ele.subjectType !== 4);
   data.noMore = data.list.length === totalItem;
   data.loading = false;
 };
@@ -108,7 +108,7 @@ const getFromMine = async () => {
   if (!res) return;
 
   const { dataList, totalItem } = res;
-  data.list = [...data.list, ...dataList];
+  data.list = [...data.list, ...dataList].filter(ele => ele.subjectType !== 4);
   data.noMore = data.list.length === totalItem;
   data.loading = false;
 };
@@ -133,7 +133,7 @@ const getFromCollection = async () => {
     const resourceRes = await ResourceService.getResourceDataBatch(resourceParams);
     if (!resourceRes) return;
 
-    data.list = [...data.list, ...resourceRes];
+    data.list = [...data.list, ...resourceRes].filter(ele => ele.subjectType !== 4);
   }
   data.noMore = data.list.length === totalItem;
   data.loading = false;
