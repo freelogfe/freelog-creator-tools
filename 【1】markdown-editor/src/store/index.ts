@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { UserService } from "@/api/request";
-import { reactive, shallowRef, toRefs } from "vue";
+import { reactive, shallowRef, toRefs, version } from "vue";
 import { I18N, ResourceDraft, User } from "@/typings/object";
 import Cookie from "@/utils/cookie";
 import { getI18nData } from "@/api/I18n";
@@ -36,6 +36,10 @@ export const useStore = defineStore("store", () => {
     searchKey: "",
     /** 授权处理子应用 */
     authorizationProcessor: null as any,
+    /** 当前的模式: (默认)normal => 可创任务; preview => 仅预览(只读, 需禁用保存的相关功能) */
+    appMode: "normal",
+    /** 当前版本 */
+    version: ""
   });
 
   const methods = {
@@ -49,9 +53,13 @@ export const useStore = defineStore("store", () => {
 
       if (POWERED_BY_QIANKUN) {
         // 作为子应用运行
-        const { resourceID, onChange_Saved, onClose } = props;
+        const { resourceID, onChange_Saved, onClose, appMode, version } = props;
         data.resourceId = resourceID;
         data.mainAppFuncs = { saveEditor: onChange_Saved, closeEditor: onClose };
+        if (appMode) {
+          data.appMode = appMode
+          data.version = version
+        }
       } else {
         // 独立运行
         Cookie.set("uid", 50060);

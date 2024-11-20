@@ -121,13 +121,13 @@ export const getAuthType = async (resourceId: string): Promise<1 | 2 | 3 | 4 | 5
   const store = useStore();
 
   const { baseUpcastResources } = store.draftData;
-  const upcastIdList = baseUpcastResources.map((item: any) => item.resourceID);
+  const upcastIdList = baseUpcastResources?.map((item: any) => item.resourceID);
   // 上抛
-  if (upcastIdList.includes(resourceId)) return 4;
+  if (upcastIdList?.includes(resourceId)) return 4;
 
-  const depIdList = store.draftData.directDependencies.map((item: any) => item.id);
+  const depIdList = store.draftData?.directDependencies?.map((item: any) => item.id);
   // 未加入依赖队列
-  if (!depIdList.includes(resourceId)) return 6;
+  if (!depIdList?.includes(resourceId)) return 6;
 
   const params = {
     licensorId: resourceId,

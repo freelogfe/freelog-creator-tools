@@ -1,7 +1,7 @@
 <template>
   <div class="creator-tools-markdown-editor" @click="store.editor?.focus()">
-    <!-- header -->
-    <div class="header">
+    <!-- header1: 只在编辑模式下用 -->
+    <div class="header" v-if="store.appMode === 'normal'">
       <div class="title" @click="consoleMarkdown">{{ I18n("title_edit_post") }}</div>
       <div class="article-info">
         <div />
@@ -22,6 +22,10 @@
         <div class="save-btn" :class="{ disabled: !data.edited }" @click="save">{{ I18n("btn_save_post") }}</div>
         <div class="exit-btn" @click.stop="clickExitBtn">{{ I18n("btn_quit_editor") }}</div>
       </div>
+    </div>
+    <!-- header2: 只在预览模式下用 -->
+    <div class="close-preview" v-else>
+      <span class="freelog fl-icon-guanbi" @click="exit"></span>
     </div>
 
     <!-- loader -->
@@ -48,12 +52,12 @@
     </div>
 
     <!-- 编辑器工具栏 -->
-    <div class="editor-toolbar">
+    <div class="editor-toolbar" v-if="store.appMode === 'normal'">
       <Toolbar :editor="store.editor" :defaultConfig="toolbarConfig" />
     </div>
 
     <!-- 编辑器 -->
-    <div id="markdownEditorWrapper" class="markdown-editor" />
+    <div id="markdownEditorWrapper" class="markdown-editor" :class="{ 'preview': store.appMode }" />
 
     <!-- 插入资源弹窗 -->
     <InsertResourceDrawer :show="data.resourceDrawerShow" :type="data.resourceDrawerType" />
@@ -242,7 +246,11 @@ const initFuncs = () => {
     }
   };
 
-  getResourceData();
+  if (store.appMode === 'normal') {
+    getResourceData();
+  } else {
+    getResourceOnly();
+  }
 };
 
 /** 加载授权处理器子应用 */
@@ -325,6 +333,28 @@ const destroyAuthorizationProcessor = () => {
   data.authorizationProcessorContainer = null;
 };
 
+/** 只获取资源相关数据 */
+const getResourceOnly = async () => {
+
+  const { resourceId, appMode, version } = store;
+  
+  const [resourceData, resourceVersionsInfo, resourceBlob] = await Promise.all([
+    ResourceService.getResourceData(resourceId),
+    ResourceService.getResourceVersions(resourceId, {} as { projection: string; sort: string }),
+    ResourceService.getResourceFile(resourceId, version)
+  ]);
+  console.log(resourceData, resourceVersionsInfo, resourceBlob);
+
+  if (!resourceData || !resourceBlob) return;
+
+  store.resourceData = resourceData;
+  store.draftData = {}
+  
+  const html = await importDoc({ content: resourceBlob, type: "resource", resourceId, version });
+
+  initEditor(html);
+}
+
 /** 获取资源与草稿数据 */
 const getResourceData = async () => {
   data.disabled = true;
@@ -398,6 +428,7 @@ const initEditor = async (html = "", saveNow = false) => {
           },
           onDestroyed: () => destroyEditor(),
           ...editorConfig,
+          readOnly: true
         },
       });
       data.loading = false;
@@ -423,8 +454,8 @@ const destroyEditor = () => {
 
 /** 保存 */
 const save = async () => {
-  const { draftData, resourceId, resourceData } = store;
-  if (!draftData) return;
+  const { draftData, resourceId, resourceData, appMode } = store;
+  if (!draftData || appMode === 'preview') return;
 
   if (data.inputTimer) {
     clearTimeout(data.inputTimer);
@@ -564,6 +595,9 @@ initFuncs();
 watch(
   () => data.html,
   (cur) => {
+
+    if (store.appMode === 'preview') return;
+    
     countWords(cur);
 
     const newMarkdown = html2md(cur);
@@ -611,6 +645,26 @@ watch(
   flex-direction: column;
   align-items: center;
   background-color: #fff;
+  position: relative;
+
+  .close-preview {
+    position: absolute;
+    right: 25px;
+    top: 10px;
+    z-index: 1;
+
+    span {
+      color: #222;
+      opacity: 0.4;
+      cursor: pointer;
+      font-size: 14px;
+
+      &:hover {
+        opacity: 0.8;
+      }
+
+    }
+  }
 
   .header {
     width: 100%;
@@ -806,6 +860,12 @@ watch(
 
   :deep .markdown-editor {
     width: 100%;
+
+    &.preview {
+      .w-e-text-container {
+        height: 100vh;
+      }
+    }
 
     .w-e-text-placeholder {
       width: fit-content;
