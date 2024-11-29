@@ -68,6 +68,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
+              if (store.appMode === 'preview') return;
               store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
@@ -82,6 +83,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
+              if (store.appMode === 'preview') return;
               store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
@@ -97,6 +99,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
+              if (store.appMode === 'preview') return;
               store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
@@ -111,6 +114,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
+              if (store.appMode === 'preview') return;
               store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
@@ -125,6 +129,7 @@ const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
         {
           on: {
             click() {
+              if (store.appMode === 'preview') return;
               store.editorFuncs.setAuthorizationProcessorDrawer(true, data);
             },
           },
