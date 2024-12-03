@@ -56,6 +56,7 @@ export const useStore = defineStore("store", () => {
         const { resourceID, onChange_Saved, onClose, appMode, version } = props;
         data.resourceId = resourceID;
         data.mainAppFuncs = { saveEditor: onChange_Saved, closeEditor: onClose };
+        
         if (appMode) {
           data.appMode = appMode
           data.version = version

@@ -367,6 +367,7 @@ const getResourceData = async () => {
   if (!resourceData || !resourceDraft) return;
 
   store.resourceData = resourceData;
+
   store.draftData = resourceDraft.draftData;
 
   getFileContent();
@@ -494,6 +495,7 @@ const save = async () => {
     sha1: res.sha1,
     from: `${I18n("label_last_modified_time")} ${formatDate(saveTime)}`,
   };
+  
   const saveDraftRes = await ResourceService.saveResourceDraftData(resourceId, store.draftData);
   if (!saveDraftRes) return;
 

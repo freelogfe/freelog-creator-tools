@@ -47,7 +47,7 @@ const onlinePolicies = props.data.policies.filter((item: { status: number }) => 
 const insert = async () => {
   const { resourceId, resourceName, latestVersion } = props.data;
   const { directDependencies } = store.draftData;
-  const index = directDependencies.findIndex((item) => item.id === resourceId);
+  const index = directDependencies?.findIndex((item) => item.id === resourceId);
   if (index === -1) {
     // 此资源不存在依赖列表
     const params = {

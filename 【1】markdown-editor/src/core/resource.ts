@@ -116,6 +116,44 @@ const getRealContent = async (content: string, data: Resource): Promise<string> 
   return html;
 };
 
+/** 获取资源授权状态(预览模式) */
+export const getAuthTypeInPreview = async (resourceId: string, deps: Array<any>): Promise<1 | 2 | 3 | 4 | 5 | 6> => {
+  const store = useStore();
+
+  const { baseUpcastResources } = store.resourceData;
+  const upcastIdList = baseUpcastResources?.map((item: any) => item.resourceID);
+  // 上抛
+  if (upcastIdList?.includes(resourceId)) return 4;
+
+  const depIdList = deps?.map((item: any) => item.resourceId);
+  // 未加入依赖队列
+  if (!depIdList?.includes(resourceId)) return 6;
+
+  const params = {
+    licensorId: resourceId,
+    licenseeId: store.resourceId,
+    licenseeIdentityType: 1,
+    subjectIds: resourceId,
+    subjectType: 1,
+  };
+  const contractsList = await ContractService.getContractsBatch(params);
+  // 没有合约（未签约）
+  if (!contractsList.length) return 1;
+
+  const authStatusList = contractsList.map((item: any) => item.authStatus);
+  // 签约且未授权
+  if (!authStatusList.includes(1) && !authStatusList.includes(3)) return 2;
+
+  const res = await ResourceService.getResourceAuthBatch(resourceId);
+  if (res[0].isAuth) {
+    // 已授权
+    return 3;
+  } else {
+    // 授权链异常
+    return 5;
+  }
+};
+
 /** 获取资源授权状态 */
 export const getAuthType = async (resourceId: string): Promise<1 | 2 | 3 | 4 | 5 | 6> => {
   const store = useStore();
@@ -384,6 +422,7 @@ const getMatchAllContent = (iterator: IterableIterator<RegExpMatchArray>, arr: s
  * @param deps 第一层依赖
  */
 const dealInternalResources = async (url: string, type: "图片" | "视频" | "音频" | "阅读", deps: any[]) => {
+  const store = useStore();
   let data: CustomResourceData;
   // 是否为依赖路径
   const isRely = url.startsWith("freelog://");
@@ -409,8 +448,11 @@ const dealInternalResources = async (url: string, type: "图片" | "视频" | "�
         };
         return customResourceHtml(data);
       }
-
-      data.authType = await getAuthType(resourceId);
+      if (store.appMode === 'preview') {
+        data.authType = await getAuthTypeInPreview(resourceId, deps);
+      } else {
+        data.authType = await getAuthType(resourceId);
+      }
       data.originType = 1;
       data.resourceId = resourceId;
       data.resourceName = resourceName;

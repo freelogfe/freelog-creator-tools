@@ -51,7 +51,15 @@ export const ImageResource = (data: CustomResourceData, editor: any): VNode => {
   }
 };
 
-/** 授权状态遮罩 */
+/** 授权状态遮罩
+ * div.auth-text的i18n翻译
+ * 1: 查看依赖声明
+ * 2: 获取授权后可正常展示
+ * 4: 此资源已上抛，下游授权方获取授权后可正常显示
+ * 5: 授权异常
+ * 6: 检测到一个未授权资源，是否现在申明并处理授权？
+ * 
+ */
 const AuthStatus = (data: CustomResourceData, editor: any): VNode => {
   if (!data.authType) {
     return h("div");
