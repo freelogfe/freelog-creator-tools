@@ -57,7 +57,7 @@
     </div>
 
     <!-- 编辑器 -->
-    <div id="markdownEditorWrapper" class="markdown-editor" :class="{ 'preview': store.appMode }" />
+    <div id="markdownEditorWrapper" class="markdown-editor" :class="{ 'preview': store.appMode === 'preview' }" />
 
     <!-- 插入资源弹窗 -->
     <InsertResourceDrawer :show="data.resourceDrawerShow" :type="data.resourceDrawerType" />
@@ -383,7 +383,7 @@ const getFileContent = async () => {
   }
 
   const fileData = await StorageService.getStorageFile(selectedFileInfo.sha1, true);
-  if (!["text/plain", "text/markdown"].includes(fileData.headers["content-type"])) {
+  if (!["text/plain", "text/markdown"].some(ele => fileData.headers["content-type"].includes(ele))) {
     ElMessage({
       message: I18n("mdeditor_import_error_format"),
       type: "warning",
