@@ -122,6 +122,7 @@ import { formatDate } from "@/utils/common";
 import { ElMessage } from "element-plus";
 import SearchInput from "@/components/search-input.vue";
 import DrawerStorageList from "@/components/drawer-storage-list.vue";
+import languageEncoding from "detect-file-encoding-and-language";
 
 const store = useStore();
 const props = defineProps(["show"]);
@@ -162,8 +163,9 @@ const selectFile = () => {
 };
 
 /** 上传文件 */
-const uploadLocalFile = (event: any) => {
+const uploadLocalFile = async (event: any) => {
   const file = event.target.files[0];
+  const { encoding = "utf-8" } = await languageEncoding(file)
   // 清除上传缓存
   event.target.value = "";
 
@@ -189,7 +191,7 @@ const uploadLocalFile = (event: any) => {
     }, 400);
   }, 500);
   const fileReader = new FileReader();
-  fileReader.readAsText(file);
+  fileReader.readAsText(file, encoding as string);
   fileReader.onload = (e: any) => {
     const { result } = e.target;
     data.importFile = { name: file.name, content: result };
