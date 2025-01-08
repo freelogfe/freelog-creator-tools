@@ -35,7 +35,7 @@ const store = useStore();
 const props = defineProps(["active", "from", "type"]);
 
 /** 列表每页数量 */
-const COUNT_PER_PAGE = 20;
+const COUNT_PER_PAGE = 100;
 /** 资源请求类型映射 */
 const REQUEST_TYPE_MAPPING: Record<string, string> = { image: "照片,插画", audio: "音频", video: "视频", text: "文章" };
 
@@ -84,7 +84,12 @@ const getFromMarket = async () => {
     keywords: store.searchKey,
     resourceType: REQUEST_TYPE_MAPPING[props.type],
     status: 1,
-  };
+  } as any ;
+
+  if (props.from === "market") {
+    params.operationTypes = '3,4,5'
+  }
+ 
   const res = await ResourceService.getResourceList(params);
   if (!res) return;
 

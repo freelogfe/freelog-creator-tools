@@ -145,7 +145,7 @@ const props = defineProps(["active", "from", "type", "operateType", "closeSubPop
 const emit = defineEmits(["select"]);
 
 /** 列表每页数量 */
-const COUNT_PER_PAGE = 12;
+const COUNT_PER_PAGE = 100;
 /** 资源类型相关映射 */
 const RESOURCE_TYPE_MAPPING: Record<string, Record<string, string>> = {
   image: {
