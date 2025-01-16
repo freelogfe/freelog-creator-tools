@@ -311,7 +311,7 @@ const data = reactive({
 /** 退出预览 */
 const existPreview = () => {
   store.previewShow = false
-  if (store.appMode === 'preview') {
+  if (store.appMode.startsWith('preview')) {
     store.mainAppFuncs.close()
   }
 }

@@ -65,12 +65,12 @@ export const useStore = defineStore("store", () => {
     async initStoreData(props: any) {
       const env = process.env.NODE_ENV;
       console.log(`comic tool running in ${env}`);
-
       const myWindow: any = window;
       const POWERED_BY_QIANKUN = myWindow.__POWERED_BY_QIANKUN__;
+      const POWERED_BY_MICRO_APP = myWindow.__MICRO_APP_ENVIRONMENT__;
 
       if (POWERED_BY_QIANKUN) {
-        // 作为子应用运行
+        // 作为乾坤子应用运行
         const { resourceID, onChange_Saved, onClose, appMode, onGlobalStateChange, version } = props;
         data.resourceId = resourceID;
         data.mainAppFuncs = { save: onChange_Saved, close: onClose };
@@ -89,14 +89,36 @@ export const useStore = defineStore("store", () => {
             appMode
           })
         })
+      } else if (POWERED_BY_MICRO_APP) {
+        // 作为京东子应用运行
+        const props = (window as any).microApp.getData()
+        const { resourceID, onChange_Saved, onClose, appMode, version } = props;
+        data.resourceId = resourceID;
+        data.mainAppFuncs = { save: onChange_Saved, close: onClose };
+        if (appMode) {
+          data.version = version
+          data.appMode = appMode
+        }
+
+        (window as any).microApp.addDataListener((state: any) => {
+          const { appMode } = state
+          data.version = version
+          data.appMode = appMode
+          methods.initStoreData({
+            ...props,
+            version,
+            appMode
+          })
+        })
       } else {
+        console.log("独立运行");
         // 独立运行
-        Cookie.set("uid", 50060);
+        Cookie.set("uid", 50031);
         Cookie.set(
           "authInfo",
-          "eyJhbGciOiJSU0EtU0hBMjU2IiwidHlwIjoiSldUIn0=.eyJ1c2VySWQiOjUwMDYwLCJ1c2VybmFtZSI6IlpodUMiLCJ1c2VyVHlwZSI6MSwibW9iaWxlIjoiMTc3Mjc0OTEzMjAiLCJlbWFpbCI6IiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuZnJlZWxvZy5jb20iLCJzdWIiOiI1MDA2MCIsImF1ZCI6ImZyZWVsb2ctd2Vic2l0ZSIsImV4cCI6MTY5MzM2MzkzOCwiaWF0IjoxNjkyMDY3OTM4LCJqdGkiOiI0YTA1MjUwYmNmMWQ0NDYyOTNiMjhmMGI0YTUzZmJkZiJ9.9d597718f07e3489cd9f3ab0a89eb4a260febca6b1abb8175ed336a25051707252b0ef176f396e064fadbb7086945577fb9c285cea18a7f8e13cc30b872997d98a2d2b853786f886844c454e85f0683e5c09a0fc238ad7490d51f6d9c3ce1a6ec7f5f3c880daad97f34beadc888efa7fb27c46cfa2a5dde2e355a80e0e9e4c15"
+          "eyJhbGciOiJSU0EtU0hBMjU2IiwidHlwIjoiSldUIn0=.eyJ1c2VySWQiOjUwMDMxLCJ1c2VybmFtZSI6IkZyZWVsb2ciLCJ1c2VyVHlwZSI6MSwibW9iaWxlIjoiIiwiZW1haWwiOiJzdXBwb3J0QGZyZWVsb2cuY29tIiwiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS5mcmVlbG9nLmNvbSIsInN1YiI6IjUwMDMxIiwiYXVkIjoiZnJlZWxvZy13ZWJzaXRlIiwiZXhwIjoxNjQ4Mjc2ODcyLCJpYXQiOjE2NDY5ODA4NzIsImp0aSI6ImVlYmViMTM1YzJmOTRkZDA4MDNmZTQxNTVjMmViNzQ5In0=.1b4db7b00a710f3b84d877485c80fc1ae7d4453bbb37a07e578b7cfc1b63b72b30db623b2b58e3b1163ac730cd554bb45017a6653f03ecda36870b4b7d252023f3e8fe4c2246a4c32174bd4da869a8c7ee22e0bddab128e5515c4a2816a48942252670a7689fff74a3fa506d673681c669ea4109315e5cd95136e84ef7e7b80b"
         );
-        data.resourceId = "659ba8b34d1119002edfa548";
+        data.resourceId = "6498fa40c74cb3002e500306";
       }
 
       const userData = await UserService.getUserData();

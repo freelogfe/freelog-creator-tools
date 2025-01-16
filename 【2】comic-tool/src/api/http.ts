@@ -11,7 +11,9 @@ const Axios = async (url: string, config: AxiosRequestConfig, origin = false) =>
 
   const params = {
     url,
-    headers: { "Content-Type": "application/json;charset=utf-8" },
+    headers: { 
+      "Content-Type": "application/json;charset=utf-8"
+    },
     withCredentials: true,
     timeout: 30000,
     ...config,

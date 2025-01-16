@@ -10,16 +10,17 @@ module.exports = {
   },
   devServer: {
     port,
-    disableHostCheck: true,
+    // disableHostCheck: true,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": "*"
     },
     proxy: {
       "/api": {
         target: process.env.VUE_APP_BASE_API,
+        changeOrigin: true,
         pathRewrite: {
           "^/api": process.env.VUE_APP_BASE_API,
-        },
+        }
       },
     },
   },

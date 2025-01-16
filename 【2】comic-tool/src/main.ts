@@ -12,7 +12,9 @@ const myWindow: any = window;
 const pinia = createPinia();
 let instance: any = null;
 
-start({ sandbox: { strictStyleIsolation: true } });
+if (myWindow.__POWERED_BY_QIANKUN__) {
+  start({ sandbox: { strictStyleIsolation: true } });
+}
 
 async function render(props: any = {}) {
   const { container } = props;
@@ -21,10 +23,10 @@ async function render(props: any = {}) {
     const store = useStore();
   await store.initStoreData(props);
   instance.mount(container ? container.querySelector("#app") : "#app");
-
 }
 
-if (!myWindow.__POWERED_BY_QIANKUN__) {
+if (!myWindow.__POWERED_BY_QIANKUN__ && !myWindow.__MICRO_APP_ENVIRONMENT__) {
+  // 独立运行
   render();
 }
 
@@ -40,6 +42,21 @@ export async function mount(props: any) {
 export async function unmount() {
   console.log("[comic tool] unmounted");
   instance.unmount();
+  instance._container.innerHTML = "";
+  instance = null;
+}
+
+// 京东 mount
+(window as any).mount = () => {
+  console.log("[comic tool in microApp] mounted");
+  render();
+}
+
+
+// 京东 卸载
+(window as any).unmount = () => {
+  console.log("[comic tool in microApp] unmounted");
+  instance.unmount()
   instance._container.innerHTML = "";
   instance = null;
 }

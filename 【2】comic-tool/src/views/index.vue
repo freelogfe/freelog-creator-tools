@@ -329,17 +329,23 @@ const getResourceOnly = async () => {
 
   const { resourceId, appMode, version } = store;
   
-  const [resourceData, resourceVersionsInfo, resourceBlob] = await Promise.all([
+  let [resourceData, resourceVersionsInfo, resourceBlob] = await Promise.all([
     ResourceService.getResourceData(resourceId),
     ResourceService.getResourceVersions(resourceId),
     ResourceService.getResourceFile(resourceId, version, { responseType: "blob" })
   ]);
+
+  if (appMode === "previewAdmin") {
+    const versionId = resourceVersionsInfo.find((ele: any) => ele.version === version)?.versionId;
+    resourceBlob = await ResourceService.getResourceFileAdmin(versionId, { responseType: "blob" })
+  }
+
   console.log(resourceData, resourceVersionsInfo, resourceBlob);
   
   if (!resourceData || !resourceBlob) return;
 
   store.resourceData = resourceData;
-  store.draftData = {}
+  store.draftData = {} as any
 
   const { resourceType } = resourceData;
 
@@ -349,7 +355,7 @@ const getResourceOnly = async () => {
 
   store.loaderShow = false;
   
-  const fileName = resourceVersionsInfo.find(ele => ele.version === version)?.filename;
+  const fileName = resourceVersionsInfo.find((ele: any) => ele.version === version)?.filename;
   const file = new File([resourceBlob], fileName + ".zip", { type: "application/zip" });
 
   store.autoScroll = true;
@@ -749,7 +755,7 @@ const cutImages = async (files: FileList) => {
 /** 保存 */
 const save = async (auto: boolean) => {
   // 预览模式下不可保存
-  if (store.appMode === 'preview') {
+  if (store.appMode.startsWith('preview')) {
     return
   }
 
@@ -1176,7 +1182,7 @@ watch(
           });
         }
 
-        if (store.appMode === 'preview' && store.imgList[0]?.base64) {
+        if (store.appMode.startsWith('preview') && store.imgList[0]?.base64) {
           console.log("store.imgList", store.imgList);
           store.previewShow = true
         }

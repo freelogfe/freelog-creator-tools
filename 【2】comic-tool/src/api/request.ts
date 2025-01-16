@@ -55,7 +55,7 @@ export class ResourceService {
   }
 
   /** 获取资源版本列表 */
-  static getResourceVersions(resourceId: string, params: { projection: string; sort: string }) {
+  static getResourceVersions(resourceId: string, params?: { projection: string; sort: string }) {
     return Axios(`/v2/resources/${resourceId}/versions`, { method: "GET", params });
   }
 
@@ -67,6 +67,11 @@ export class ResourceService {
   /** 获取资源标准属性 */
   static getAttrsByCode(params: { code: string }) {
     return Axios(`/v2/resources/types/getAttrsByCode`, { method: "GET", params });
+  }
+
+  /** 获取资源版本文件(仅admin后台可用) */
+  static getResourceFileAdmin(versionId: string, config?: AxiosRequestConfig) {
+    return Axios(`/v2/resources/versions/${versionId}/internalClientDownload`, { method: "GET", ...config })
   }
 }
 
